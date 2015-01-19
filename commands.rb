@@ -9,7 +9,6 @@ module Commands
   $ranks = YAML.load_file('config/ranks.yaml')
 
   def can(command, user)
-
     if (user.match(/\W\s*#{$owner}/i)) then return true end
     groups = {  
       'unranked' => 0,
@@ -36,6 +35,12 @@ module Commands
     if ($ranks[command].nil?) then command_rank = 'unranked' else command_rank = $ranks[command] end
     return "The current rank for #{command} is #{command_rank}."
   end
+
+  def g(target, user)
+    url = "http://www.google.com/search?q=#{CGI.escape(target)}"
+    data = Nokogiri::HTML(open(url)).at('h3.r')
+    data_string = data.at('./following::div').children.first.text.gsub(/CachedSimilar|Cached/,'')
+    return "#{data.text}: #{data_string}"
 
   def salt(target, user)
     if !can('salt', user) then return "" end
@@ -107,7 +112,7 @@ module Commands
 
   def urban(target=nil, user)
     if !can('urban',user) then return "" end
-    if word.nil?
+    if target.nil?
       url = "http://api.urbandictionary.com/v0/random"
     else
       url = "http://api.urbandictionary.com/v0/define?term=#{word}"
@@ -117,7 +122,7 @@ module Commands
   end
 
   def custom(target, user)
-    #if !can('custom', user) then return "" end
+    if !can('custom', user) then return "" end
     if ((target.include? '/transferbucks' or target.include? '/tb') and (!user.match(/#{$owner}/i)))
       return ""
     else
