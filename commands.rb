@@ -91,18 +91,18 @@ module Commands
   end
 
   def dex(target=nil, user)
-    #if (!can('dex', user)) then return "" end
+    if (!can('dex', user)) then return "" end
     if target.nil?
       target = File.readlines('data/pokemon.txt').sample.strip
     end
-    #begin
-     # url = Nokogiri::HTML(open("http://bulbapedia.bulbagarden.net/wiki/#{target.capitalize}_(Pokemon)"))
-      #egg = url.css('a[href="/wiki/Species"]')[0].content
-      #flavor_text = url.css('td[rowspan="1"]')[-1].content
-    return "HELLO"#{target.capitalize}, the #{egg}. #{flavor_text}"
-    #rescue
-     # return "Seems like there is no Pokemon named #{target.capitalize}."
-    #end
+    begin
+      url = Nokogiri::HTML(open("http://bulbapedia.bulbagarden.net/wiki/#{target.capitalize}_(Pokemon)"))
+      egg = url.css('a[href="/wiki/Species"]')[0].content
+      flavor_text = url.css('td[rowspan="1"]')[-1].content
+      return "#{target.capitalize}, the #{egg}. #{flavor_text}"
+    rescue
+      return "Seems like there is no Pokemon named #{target.capitalize}."
+    end
   end
 
   def urban(target=nil, user)
@@ -117,11 +117,11 @@ module Commands
   end
 
   def custom(target, user)
-    if !can('custom', user) then return "" end
+    #if !can('custom', user) then return "" end
     if ((target.include? '/transferbucks' or target.include? '/tb') and (!user.match(/#{$owner}/i)))
       return ""
     else
-      return target.join(', ')
+      return target
     end
   end
 

@@ -62,17 +62,10 @@ class Bot
         when  'c:'
           room = m[0]
           user = m[3]
-          if m[4][0] == @symbol
+          if m[4][0].to_s == @symbol.to_s
             cmd = m[4].split(@symbol)[1].split(' ')[0]
-            begin
-              arguments = m[4].split(cmd)[1].strip!
-            rescue
-              arguments = nil
-            end
-            begin
-              ws.send("#{room}|#{send cmd, arguments, user}")
-            rescue
-            end
+            arguments = m[4].split("#{cmd} ")[1] || nil
+            ws.send("#{room}|#{send cmd, arguments, user}") 
           end
 
           ws.send("#{room}|#{$bot.think m[4]}") if m[4].include? @user
