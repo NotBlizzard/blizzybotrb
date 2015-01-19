@@ -42,6 +42,7 @@ module Commands
     data = Nokogiri::HTML(open(url)).at('h3.r')
     data_string = data.at('./following::div').children.first.text.gsub(/CachedSimilar|Cached/,'')
     return "#{data.text}: #{data_string}"
+  end
 
   def salt(target, user)
     if !can('salt', user) then return "" end
