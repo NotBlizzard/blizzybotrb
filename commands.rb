@@ -40,7 +40,7 @@ module Commands
   def g(target, user)
     url = "http://www.google.com/search?q=#{CGI.escape(target)}"
     data = Nokogiri::HTML(open(url)).at('h3.r')
-    data_string = data.at('./following::div').children.first.text.gsub(/CachedSimilar|Cached/,'')
+    data_string = data.at('./following::div').children.first.text.gsub(/(CachedSimilar|Cached)/,'')
     return "#{data.text}: #{data_string}"
   end
 
