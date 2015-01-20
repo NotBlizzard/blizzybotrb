@@ -6,7 +6,10 @@ require 'cgi'
 
 module Commands
 
-  $owner = YAML.load_file('config/options.yaml')['owner']
+  begin
+    $owner = YAML.load_file('config/options.yaml')['owner']
+  rescue
+  end
   $ranks = YAML.load_file('config/ranks.yaml')
 
   def can(command, user)
@@ -32,25 +35,29 @@ module Commands
   end
 
   def rank(target, user)
-    if !can('rank', user) then return "" end
+    if !can('rank', user) then return '' end
     if ($ranks[command].nil?) then command_rank = 'unranked' else command_rank = $ranks[command] end
     return "The current rank for #{command} is #{command_rank}."
   end
 
   def g(target, user)
+    if !can('g', user) then return '' end
     url = "http://www.google.com/search?q=#{CGI.escape(target)}"
+    puts "url is #{url}"
+    puts "USER IS #{user}"
     data = Nokogiri::HTML(open(url)).at('h3.r')
     data_string = data.at('./following::div').children.first.text.gsub(/(CachedSimilar|Cached)/,'')
-    return "#{data.text}: #{data_string}"
+    text = data.text.encode("utf8")
+    return "#{text}"
   end
 
   def salt(target, user)
-    if !can('salt', user) then return "" end
+    if !can('salt', user) then return '' end
     return "#{target} is #{(Random.rand(0.0..100.0)).round(2)}% salty."
   end
 
   def reload(target, user)
-    if !can('reload', user) then return "" end
+    if !can('reload', user) then return '' end
     begin
       load './commands.rb'
       return "Commands reloaded."
@@ -60,7 +67,7 @@ module Commands
   end
 
   def fight(target, user)
-    if !can('fight', user) then return "" end
+    if !can('fight', user) then return '' end
     percent = Random.rand(0..100)
     person1 = target.split(',')[0]
     person2 = target.split(',')[1]
@@ -70,11 +77,11 @@ module Commands
   end
 
   def set(target, user)
-    if !can('set', user) then return "" end
+    if !can('set', user) then return '' end
     command = target.split(',') [0]
     rank = target.split(',')[1]
     settable = ['helix','banlist','blacklist','dex','pick','reload','custom','urban','define','blacklistlist','gfy']
-    if (!settable.include? command) then return "" end
+    if (!settable.include? command) then return '' end
     settableranks = ['unranked','+','%','@','#','&','~','off','']
     if (!settableranks.include? rank) then return "Have to be one of the following $ranks: #{settableranks.join(', ')}" end
     $ranks[command] = rank
@@ -87,18 +94,18 @@ module Commands
   end
 
   def helix(target, user)
-    if !can('helix', user) then return "" end
+    if !can('helix', user) then return '' end
     return File.readlines('data/helix.txt').sample
   end
 
   def pick(target, user)
-    if !can('pick', user) then return "" end
+    if !can('pick', user) then return '' end
     randompick = target.split(',').sample
     return "Hmm, I randomly picked #{randompick}."
   end
 
   def dex(target=nil, user)
-    if (!can('dex', user)) then return "" end
+    if (!can('dex', user)) then return '' end
     if target.nil?
       target = File.readlines('data/pokemon.txt').sample.strip
     end
@@ -113,18 +120,21 @@ module Commands
   end
 
   def urban(target=nil, user)
-    if !can('urban',user) then return "" end
+    if !can('urban',user) then return '' end
     if target.nil?
       url = "http://api.urbandictionary.com/v0/random"
     else
-      url = "http://api.urbandictionary.com/v0/define?term=#{word}"
+      if target.include? ' '
+        target = target.split(' ').join('+')
+      end
+      url = "http://api.urbandictionary.com/v0/define?term=#{target}"
     end
-    urban = RestClient.get url
-    return "#{urban['list'][0]['word']}: #{urban['list'][0]['definition'].strip.gsub('[','').gsub(']','').gsub("\n",'')}"
+    urban = JSON.parse(RestClient.get url)
+    return "#{urban['list'][0]['word']}: #{urban['list'][0]['definition'].gsub(/[\[\]\n]/,'')}"
   end
 
   def custom(target, user)
-    if !can('custom', user) then return "" end
+    if !can('custom', user) then return '' end
     if ((target.include? '/transferbucks' or target.include? '/tb') and (!user.match(/#{$owner}/i)))
       return ""
     else
@@ -133,7 +143,7 @@ module Commands
   end
 
   def define(target, user)
-    if !can('define', user) then return "" end
+    if !can('define', user) then return '' end
     begin
       dictionary = Nokogiri::HTML(open("http://www.dictionary.reference.com/browse/#{target.downcase}"))
       return "#{target}: #{dictionary.css('.def-content')[0].content.strip}"

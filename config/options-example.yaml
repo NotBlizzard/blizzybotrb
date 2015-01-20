@@ -7,4 +7,5 @@ bots:
         owner: 
         symbol:
         log:
+
 #if you want to run another bot at the same time, add a '-', like above, and follow the format.

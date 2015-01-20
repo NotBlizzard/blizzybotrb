@@ -65,6 +65,7 @@ class Bot
           if m[4][0].to_s == @symbol.to_s
             cmd = m[4].split(@symbol)[1].split(' ')[0]
             arguments = m[4].split("#{cmd} ")[1] || nil
+            puts "args are #{arguments}"
             ws.send("#{room}|#{send cmd, arguments, user}") 
           end
 

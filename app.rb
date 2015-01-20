@@ -8,7 +8,8 @@ require 'yaml'
 begin
   options = YAML.load_file('config/options.yaml')['bots']
 rescue
-  puts "You need to rename 'options-example.yaml' to 'options.yaml' in config and add your credentials."
+  puts "You need to rename 'options-example.yaml' to 'options.yaml'\nin /config and add your credentials."
+  exit!
 end
 
 EventMachine.run do
