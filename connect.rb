@@ -8,7 +8,7 @@ require 'open-uri'
 require 'yaml'
 require 'json'
 
-class Bot
+class ShowdownBot
   include Commands
   $current_team = false
   $battleroom = ''
@@ -37,13 +37,10 @@ class Bot
         when 'challstr'
           url = "http://play.pokemonshowdown.com/action.php"
           if @pass.nil? or @pass == ''
-            puts 'no pass'
             url_data = "?act=getassertion&userid=#{@user}&challengekeyid=#{m[2]}&challenge=#{m[3]}"
             data = RestClient.get url+url_data
-            puts "data is #{data}"
             ws.send("|/trn #{@user}, 0, #{data}")         
           else
-            puts "pass"
             data = RestClient.post url, :act => 'login', :name => @user, :pass => @pass, :challengekeyid => m[2], :challenge => m[3]
             data = JSON.parse(data.split(']')[1])
             ws.send("|/trn #{@user},0,#{data['assertion']}")
@@ -62,7 +59,7 @@ class Bot
         when  'c:'
           room = m[0]
           user = m[3]
-          if m[4][0].to_s == @symbol.to_s
+          if m[4][0] == @symbol
             cmd = m[4].split(@symbol)[1].split(' ')[0]
             arguments = m[4].split("#{cmd} ")[1] || nil
             puts "args are #{arguments}"

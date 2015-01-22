@@ -30,7 +30,7 @@ module Commands
     if (groups[userrank] >= groups[$ranks[command]])
       return true
     else
-      return
+      return ''
     end
   end
 
