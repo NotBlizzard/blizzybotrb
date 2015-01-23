@@ -14,7 +14,7 @@ end
 
 EventMachine.run do
   options.each do |x|
-    bot = Bot.new(
+    bot = ShowdownBot.new(
       x['user'],
       x['pass'],
       x['rooms'],
@@ -23,6 +23,6 @@ EventMachine.run do
       x['symbol'],
       x['log']
     )
-    bot.run()
+    bot.run
   end
 end

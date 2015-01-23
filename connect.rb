@@ -1,6 +1,6 @@
-#connect.rb - How the bot connects to the Pokemon Showdown websocket. Don't mess with this.
-require 'faye/websocket'
 require './commands.rb'
+
+require 'faye/websocket'
 require 'cleverbot-api'
 require 'rest_client'
 require 'nokogiri'
@@ -25,7 +25,7 @@ class ShowdownBot
     @log = log
   end
 
-  def run()
+  def run
     ws = Faye::WebSocket::Client.new("ws://#{@server}/showdown/websocket")
 
     ws.on :message do |event|
