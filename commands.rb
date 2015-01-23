@@ -3,6 +3,7 @@ require 'nokogiri'
 require 'open-uri'
 require 'yaml'
 require 'cgi'
+require './connect.rb'
 
 module Commands
 
@@ -31,6 +32,24 @@ module Commands
       return true
     else
       return ''
+    end
+  end
+
+  def last(target, user)
+    begin
+      return "Last message of #{target} was \"#{ShowdownBot.messages[target][1][0]}\" at #{Time.at(ShowdownBot.messages[target][0].to_i)}."
+    rescue
+      return "I can't remember #{target}'s last message."
+    end
+  end
+
+  def gsub(target, user)
+    begin
+      looking_for_word = target.split(',')[0]
+      replace_word = target.split(',')[1]
+      return "What #{user} meant to say was: \"#{ShowdownBot.messages[user[1..-1]][1][0].gsub(looking_for_word,replace_word)}\""
+    rescue
+      return "You gotta say something first."
     end
   end
 
