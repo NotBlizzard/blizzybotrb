@@ -2,8 +2,8 @@ bots:
     -
         user: 
         pass:
-        rooms: ['lobby']
         server: 000.000.000:8000
+        rooms: ['lobby']
         owner: 
         symbol:
         log:
