@@ -32,7 +32,7 @@ class String
   end
 end
 
-
+#Add your commands here
 module Commands
   def sudo(target, user)
     return '' unless user.can('sudo')
