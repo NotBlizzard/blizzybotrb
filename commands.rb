@@ -116,7 +116,7 @@ module Commands
   end
 
   def about(target, user)
-    return "/pm #{user}, **BlizzyBot** by: blizzardq. Made with Ruby #{RUBY_VERSION}"
+    return "**BlizzyBot** : made by BlizzardQ. Made with Ruby #{RUBY_VERSION}"
   end
 
   def helix(target, user)
