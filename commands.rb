@@ -3,7 +3,8 @@ require 'nokogiri'
 require 'open-uri'
 require 'yaml'
 require 'cgi'
-require './parser.rb'
+
+require_relative 'parser'
 
 class String
   $owner = YAML.load_file('config/options.yaml')['owner']
@@ -32,7 +33,6 @@ class String
   end
 end
 
-#Add your commands here
 module Commands
   def sudo(target, user)
     return '' unless user.can('sudo')
@@ -49,17 +49,6 @@ module Commands
       return "Last message of #{target} was \"#{ShowdownBot.messages[target][1][0]}\" at #{Time.at(ShowdownBot.messages[target][0].to_i)}."
     rescue
       return "I can't remember #{target}'s last message."
-    end
-  end
-
-  def gsub(target, user)
-    return '' unless user.can('gsub')
-    begin
-      looking_for_word = target.split(',')[0]
-      replace_word = target.split(',')[1]
-      return "What #{user} meant to say was: \"#{ShowdownBot.messages[user[1..-1]][1][0].gsub(looking_for_word,replace_word)}\""
-    rescue
-      return "You gotta say something first."
     end
   end
 
@@ -96,8 +85,9 @@ module Commands
 
   def fight(target, user)
     return '' unless user.can('fight')
-    person1 = target.split(',')[0]
-    person2 = target.split(',')[1]
+    target = target.split(',')
+    person1 = target[0]
+    person2 = target[1]
     if Random.rand(0..1) == 1 then userpicked = person1 else userpicked = person2 end
     message = "Hmm, if #{person1} and #{person2} were to fight, #{userpicked} would have a #{Random.rand(0..100)}% chance of winning."
     return message
