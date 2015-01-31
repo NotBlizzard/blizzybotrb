@@ -70,15 +70,6 @@ class ShowdownBot
 
         #Battle Parser: Basically, the bot battles using random moves.
 
-        when 'tournament'
-          begin
-            data = JSON.parse(m[3])
-            if !data['challenges'].nil?
-              ws.send("#{room}|/tour challenge #{['challenges']}")
-            end
-          rescue
-          end
-
         when 'updatechallenges'
           from = JSON.parse(m[2])
           if from.include? 'challengecup1vs1'
