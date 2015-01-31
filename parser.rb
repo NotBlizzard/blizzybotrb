@@ -35,10 +35,10 @@ class ShowdownBot
     ws = Faye::WebSocket::Client.new("ws://#{@server}/showdown/websocket")
 
     ws.on :message do |event|
-      p [:message, event.data] if @log
+      event.data.gsub!(/[\n>]/,'')
+      p event.data if @log
       event.data.split('\n').each do |m|
-        m = m.gsub(/[\n>]/,'').split('|')
-       
+        m = m.split('|')
         case m[1]
         when 'challstr'
           url = "http://play.pokemonshowdown.com/action.php"
