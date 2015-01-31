@@ -43,23 +43,12 @@ class ShowdownBot
         when 'challstr'
           url = "http://play.pokemonshowdown.com/action.php"
           if @pass.nil?
-            #url_data = "?act=getassertion&userid=#{@user}&challengekeyid=#{m[2]}&challenge=#{m[3]}"
             data = RestClient.get url, :act => 'getassertion', :userid => @user, :challengekeyid => m[2], :challenge => m[3]
             ws.send("|/trn #{@user}, 0, #{data}")         
           else
             data = RestClient.post url, :act => 'login', :name => @user, :pass => @pass, :challengekeyid => m[2], :challenge => m[3]
             data = JSON.parse(data.split(']')[1])
             ws.send("|/trn #{@user},0,#{data['assertion']}")
-          end
-
-        when 'updatechallenges'
-          from = JSON.parse(m[2])
-          if from.include? 'challengecup1vs1'
-            ws.send("|/accept #{from['challengesFrom'].invert['challengecup1vs1']}")
-            @tier = 'cc1v1'
-          elsif from.include? 'randombattle'
-            ws.send("|/accept #{from['challengesFrom'].invert['randombattle']}")
-            @tier = 'randombattle'
           end
 
         when  'c:'
@@ -79,6 +68,8 @@ class ShowdownBot
         when 'updateuser'
           @rooms.each { |r| ws.send("|/join #{r}") }
 
+        #Battle Parser: Basically, the bot battles using random moves.
+
         when 'tournament'
           begin
             data = JSON.parse(m[3])
@@ -86,6 +77,16 @@ class ShowdownBot
               ws.send("#{room}|/tour challenge #{['challenges']}")
             end
           rescue
+          end
+
+        when 'updatechallenges'
+          from = JSON.parse(m[2])
+          if from.include? 'challengecup1vs1'
+            ws.send("|/accept #{from['challengesFrom'].invert['challengecup1vs1']}")
+            @tier = 'cc1v1'
+          elsif from.include? 'randombattle'
+            ws.send("|/accept #{from['challengesFrom'].invert['randombattle']}")
+            @tier = 'randombattle'
           end
 
         when 'request'
@@ -101,12 +102,12 @@ class ShowdownBot
           $battleroom = m[0].gsub(/[\n>]/,'')
           if @tier == 'cc1v1'
             ws.send("#{$battleroom}|/team #{rand(1...7)}")
-          elsif @tier == 'r&&ombattle'
+          elsif @tier == 'randombattle'
             ws.send("#{$battleroom}|/move #{rand(1...5)}")
           end
 
         when 'title'
-          $battleroom = msg[0].gsub(/\n>/,'')
+          $battleroom = m[0].gsub(/\n>/,'')
           ws.send("#{$battleroom}|Good luck, have fun.")
 
         when '\n'
