@@ -57,7 +57,10 @@ class ShowdownBot
           if m[4][0] == @symbol
             cmd = m[4].split(@symbol)[1].split(' ')[0]
             arguments = m[4].split("#{cmd} ")[1] || nil
-            ws.send("#{room}|#{send cmd, arguments, user}") 
+            begin
+              ws.send("#{room}|#{send cmd, arguments, user}") 
+            rescue
+              puts "Error: #{cmd} is not a known command."
           end
 
           $messages[user[1..-1]] = [m[2],[m[4]]]
