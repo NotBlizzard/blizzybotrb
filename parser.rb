@@ -10,7 +10,6 @@ require 'json'
 
 
 class ShowdownBot
-  include Commands
   $current_team = false
   $battleroom = nil
   $messages = Hash.new
@@ -52,6 +51,12 @@ class ShowdownBot
             ws.send("|/trn #{@user},0,#{data['assertion']}")
           end
 
+        when 'pm'
+          user = m[2]
+          if m[4].include? @user
+            ws.send("|/pm #{user}, #{$bot.think m[4]}")
+          end
+          
         when  'c:'
           room = m[0]
           user = m[3]
