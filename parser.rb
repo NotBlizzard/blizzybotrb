@@ -17,7 +17,7 @@ class ShowdownBot
   $team = Hash.new
   $tier = nil
   $bot = CleverBot.new
-  def initialize(user, pass = nil, rooms, server, owner, symbol, log)
+  def initialize(user, pass = '', rooms, server, owner, symbol, log)
     @user = user
     @pass = pass
     @rooms = rooms
@@ -43,9 +43,9 @@ class ShowdownBot
         case m[1]
         when 'challstr'
           url = "http://play.pokemonshowdown.com/action.php"
-          if @pass.nil?
-            data = RestClient.get url, :act => 'getassertion', :userid => @user, :challengekeyid => m[2], :challenge => m[3]
-            ws.send("|/trn #{@user}, 0, #{data}")         
+          if @pass.nil? or @pass == ''
+            data = RestClient.get url, :params => {:act => 'getassertion', :userid => @user, :challengekeyid => m[2], :challenge => m[3]}
+            ws.send("|/trn #{@user},0,#{data}")         
           else
             data = RestClient.post url, :act => 'login', :name => @user, :pass => @pass, :challengekeyid => m[2], :challenge => m[3]
             data = JSON.parse(data.split(']')[1])
@@ -58,11 +58,8 @@ class ShowdownBot
           if m[4][0] == @symbol
             cmd = m[4].split(@symbol)[1].split(' ')[0]
             arguments = m[4].split("#{cmd} ")[1] || nil
-            begin
-              ws.send("#{room}|#{send cmd, arguments, user}") 
-            rescue
-              puts "Error: #{cmd} is not a known command."
-            end
+            
+            ws.send("#{room}|#{send cmd, arguments, user}") 
           end
 
           $messages[user[1..-1]] = [m[2],[m[4]]]

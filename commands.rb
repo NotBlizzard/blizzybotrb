@@ -39,7 +39,11 @@ module Commands
     if target.tainted? 
       return 'Tainted input.'
     else
-      return eval(target)
+      begin
+        return eval(target)
+      rescue
+        return "Error: I can not $sudo #{target}"
+      end
     end
   end
 
