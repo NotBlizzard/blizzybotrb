@@ -37,7 +37,7 @@ module Commands
   def sudo(target, user)
     return '' unless user.can('sudo')
     if target.tainted? 
-      return ''
+      return 'Tainted input.'
     else
       return eval(target)
     end

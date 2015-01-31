@@ -35,7 +35,8 @@ class ShowdownBot
     ws = Faye::WebSocket::Client.new("ws://#{@server}/showdown/websocket")
 
     ws.on :message do |event|
-      event.data.gsub!(/[\n>]/,'')
+      event.data.gsub!(/^>/,'')
+      event.data.gsub!(/\n/,'')
       p event.data if @log
       event.data.split('\n').each do |m|
         m = m.split('|')
