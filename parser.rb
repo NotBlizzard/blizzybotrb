@@ -61,6 +61,7 @@ class ShowdownBot
               ws.send("#{room}|#{send cmd, arguments, user}") 
             rescue
               puts "Error: #{cmd} is not a known command."
+            end
           end
 
           $messages[user[1..-1]] = [m[2],[m[4]]]
