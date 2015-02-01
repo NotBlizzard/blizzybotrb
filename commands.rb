@@ -64,6 +64,9 @@ def sudo(target, user)
     return 'Tainted input.'
   else
     begin
+      if (target == '10+9' or target == '9+10')
+        return "21"
+      end
       return eval(target)
     rescue
       return "Error: I can not $sudo #{target}"
