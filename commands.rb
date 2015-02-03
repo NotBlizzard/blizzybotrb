@@ -64,9 +64,6 @@ def sudo(target, user)
     return 'Tainted input.'
   else
     begin
-      if (target == '10+9' or target == '9+10')
-        return "21"
-      end
       return eval(target)
     rescue
       return "Error: I can not $sudo #{target}"
@@ -124,6 +121,15 @@ def fight(target, user)
   return message
 end
 
+def rank(target, user)
+  return '' unless user.can('rank')
+  begin
+    return "The command #{target} is set to: #{$ranks[target]}"
+  rescue
+    return "The command #{target} is set to: unranked."
+  end
+end
+
 def set(target, user)
   return '' unless user.can('set')
   target = target.gsub(/ /,'').split(',')
@@ -151,20 +157,21 @@ def pick(target, user)
   return "Hmm, I randomly picked #{randompick}."
 end
 
-def dex(target=nil, user)
- return '' unless user.can('dex')
-  if target.nil?
-    target = File.readlines('data/pokemon.txt').sample.strip
-  end
-  begin
-    url = Nokogiri::HTML(open("http://bulbapedia.bulbagarden.net/wiki/#{target.capitalize}_(Pokemon)"))
-    egg = url.css('a[href="/wiki/Species"]')[0].content
-    flavor_text = url.css('td[rowspan="1"]')[-1].content
-    return "#{target.capitalize}, the #{egg}. #{flavor_text}"
-  rescue
-    return "Seems like there is no Pokemon named #{target.capitalize}."
-  end
-end
+#def dex(target=nil, user)
+# return '' unless user.can('dex')
+#  if target.nil?
+#    target = File.readlines('data/pokemon.txt').sample.strip
+#  end
+  #begin
+#  url = Nokogiri::HTML(open("http://bulbapedia.bulbagarden.net/wiki/#{target.capitalize}_(Pokemon)"))
+#  egg = url.css('a[href="/wiki/Species"]')[0].content
+#  flavor_text = url.css('td[class="roundy" and vertical-align="center"]')
+#  print "FLAVOR IS #{flavor_text}"
+  #return "#{target.capitalize}, the #{egg}. #{flavor_text}"
+  #rescue
+   # return "Seems like there is no Pokemon named #{target.capitalize}."
+  #end
+#end
 
 def urban(target=nil, user)
   return '' unless user.can('urban')

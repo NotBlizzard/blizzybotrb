@@ -38,7 +38,7 @@ class ShowdownBot
       event.data.gsub!(/\n/,'')
       p event.data if @log
       event.data.split('\n').each do |m|
-        m = m.downcase.split('|')
+        m = m.split('|')
         case m[1]
         when 'challstr'
           url = "http://play.pokemonshowdown.com/action.php"
@@ -53,22 +53,26 @@ class ShowdownBot
 
         when 'pm'
           user = m[2]
-          if m[4].include? @user.downcase
+          if m[4].downcase.include? @user.downcase
             ws.send("|/pm #{user}, #{$bot.think m[4]}")
           end
           
         when  'c:'
           room = m[0]
           user = m[3]
+          user_id = user[1..-1].downcase.gsub(/ /,'')
           if m[4][0] == @symbol
-            cmd = m[4].split(@symbol)[1].split(' ')[0]
-            arguments = m[4].split("#{cmd} ")[1] || nil
-            
-            ws.send("#{room}|#{send cmd, arguments, user}") 
+            begin
+              cmd = m[4].split(@symbol)[1].split(' ')[0]
+              arguments = m[4].split("#{cmd} ")[1] || nil
+              ws.send("#{room}|#{send cmd, arguments, user}") 
+            rescue
+              puts "."
+            end
           end
 
-          $messages[user[1..-1]] = [m[2],[m[4]]]
-          if m[4].include? @user.downcase and m[4][0] != @symbol
+          $messages[user_id] = [m[2],[m[4]]]
+          if m[4].downcase.include? @user.downcase and m[4][0] != @symbol and @user.downcase != user_id
             ws.send("#{room}|#{user[1..-1]}, #{($bot.think m[4].gsub(/#{@user}/,'')).downcase}")
           end
 
