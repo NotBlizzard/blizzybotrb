@@ -4,6 +4,8 @@ require 'open-uri'
 require 'yaml'
 require 'cgi'
 
+WUNDERGROUND = YAML.load_file('config/options.yaml')['wunderground']
+
 require './parser.rb'
 
 class String
@@ -31,6 +33,21 @@ class String
       return false
     end
   end
+end
+
+def uptime(target=nil,user)
+  return (Time.now.to_i - TIME_NOW)
+end
+
+def weather(target, user)
+  target = target.gsub(/ /,'').split(',')
+  city = target[0]
+  state = target[1]
+  data = JSON.parse(open("http://api.wunderground.com/api/#{WUNDERGROUND}/conditions/q/#{state}/#{city}.json").read)['current_observation']
+  temp = data['temperature_string'].gsub(/\(/,'/').gsub(/\)/,'')
+  feels_like = data['feelslike_string'].gsub(/\(/,'/').gsub(/\)/,'')
+  string = "#{data['display_location']['full']}: #{data['weather']}, #{temp}(Feels like #{feels_like})"
+  return string
 end
 
 def dice(target=nil, user)
@@ -74,7 +91,8 @@ end
 def last(target, user)
   return '' unless user.can('last')
   begin
-    return "Last message of #{target} was \"#{ShowdownBot.messages[target][1][0]}\" at #{Time.at(ShowdownBot.messages[target][0].to_i)}."
+    target = target.downcase.gsub(/ /,'')
+    return "Last message of #{target} was \"#{ShowdownBot.messages[target][1]}\" at #{Time.at(ShowdownBot.messages[target][0].to_i)}."
   rescue
     return "I can't remember #{target}'s last message."
   end
@@ -117,14 +135,14 @@ def fight(target, user)
   person1 = target[0]
   person2 = target[1]
   if Random.rand(0..1) == 1 then userpicked = person1 else userpicked = person2 end
-  message = "Hmm, if #{person1} and #{person2} were to fight, #{userpicked} would have a #{Random.rand(0..100)}% chance of winning."
+  message = "If #{person1} and #{person2} were to fight, #{userpicked} would have a #{Random.rand(0..100)}% chance of winning."
   return message
 end
 
 def rank(target, user)
   return '' unless user.can('rank')
   begin
-    return "The command #{target} is set to: #{$ranks[target]}"
+    return "The command #{target} is set to: #{$ranks[target]}."
   rescue
     return "The command #{target} is set to: unranked."
   end
@@ -138,12 +156,12 @@ def set(target, user)
   ranks = ['unranked','+','%','@','#','&','~','off','']
   if (!ranks.include? rank) then return "Have to be one of the following ranks: #{settableranks.join(', ')}" end
   $ranks[command] = rank
-  File.open('ranks.yaml','w') { |b| b.write($ranks.to_yaml)}
+  File.open('config/ranks.yaml','w') { |b| b.write($ranks.to_yaml)}
   return "The command #{command} is now set to #{rank}."
 end
 
 def about(target, user)
-  return "**BlizzyBot** : made by BlizzardQ. Made with Ruby #{RUBY_VERSION}"
+  return "**BlizzyBot** : made by BlizzardQ. Made with Ruby #{RUBY_VERSION}."
 end
 
 def helix(target, user)

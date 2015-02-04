@@ -21,7 +21,8 @@ EventMachine.run do
       x['server'],
       x['owner'],
       x['symbol'],
-      x['log']
+      x['log'],
+      x['ignore']
     )
     bot.run
   end

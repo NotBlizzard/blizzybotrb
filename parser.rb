@@ -16,7 +16,7 @@ class ShowdownBot
   $team = Hash.new
   $tier = nil
   $bot = CleverBot.new
-  def initialize(user, pass = '', rooms, server, owner, symbol, log)
+  def initialize(user, pass = '', rooms, server, owner, symbol, log, ignore)
     @user = user
     @pass = pass
     @rooms = rooms
@@ -24,6 +24,7 @@ class ShowdownBot
     @owner = owner
     @symbol = symbol
     @log = log
+    @ignore = ignore.each {|x| x.downcase}
   end
 
   def self.messages
@@ -61,18 +62,17 @@ class ShowdownBot
           room = m[0]
           user = m[3]
           user_id = user[1..-1].downcase.gsub(/ /,'')
-          if m[4][0] == @symbol
+          if m[4][0] == @symbol and !@ignore.include? user_id
             begin
               cmd = m[4].split(@symbol)[1].split(' ')[0]
               arguments = m[4].split("#{cmd} ")[1] || nil
               ws.send("#{room}|#{send cmd, arguments, user}") 
             rescue
-              puts "."
             end
           end
 
-          $messages[user_id] = [m[2],[m[4]]]
-          if m[4].downcase.include? @user.downcase and m[4][0] != @symbol and @user.downcase != user_id
+          $messages[user_id] = [m[2],m[4].gsub(/"/,"\"")]
+          if m[4].downcase.include? @user.downcase and m[4][0] != @symbol and @user.downcase != user_id and !@ignore.include? user_id
             ws.send("#{room}|#{user[1..-1]}, #{($bot.think m[4].gsub(/#{@user}/,'')).downcase}")
           end
 
