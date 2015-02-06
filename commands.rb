@@ -9,11 +9,12 @@ WUNDERGROUND = YAML.load_file('config/options.yaml')['wunderground']
 require './parser.rb'
 
 class String
-  $owner = YAML.load_file('config/options.yaml')['owner']
+  $except = YAML.load_file('config/options.yaml')['except']
   $ranks = YAML.load_file('config/ranks.yaml')
     
   def can(command)
-    if (self.match(/\W\s*#{$owner}/i)) then return true end
+    user_id = user.chars.to_a.select!{|x| x =~/([[:alpha:]]|[[:digit:]])/}.join
+    return true if $except.include? user_id
     groups = {  
         'unranked' => 0,
         '+' => 1,
@@ -24,19 +25,18 @@ class String
         '~' => 5,
         'off' => 6
     }
-    rank = self[0]
-    if (!$ranks.include? command or groups[$ranks[command]] == 'unranked') then return true end
-    if (!groups.keys.include? rank) then rank = 'unranked' end
-    if (groups[rank] >= groups[$ranks[command]])
-      return true
-    else
-      return false
-    end
+    user_rank = groups[self[0]].to_i
+    command_rank = groups[$ranks[command]].to_i
+    #if (!$ranks.include? command or groups[$ranks[command]] == 'unranked') then return true end
+    #if (!groups.keys.include? rank) then rank = 'unranked' end
+    return "user rank is #{user_rank}, command rank is #{command_rank}"
+    # user_rank >= command_rank
   end
 end
 
-def uptime(target=nil,user)
-  return (Time.now.to_i - TIME_NOW)
+def test(target=nil,user)
+  puts 'k'
+  return user.can(target)
 end
 
 def weather(target, user)
@@ -48,6 +48,11 @@ def weather(target, user)
   feels_like = data['feelslike_string'].gsub(/\(/,'/').gsub(/\)/,'')
   string = "#{data['display_location']['full']}: #{data['weather']}, #{temp}(Feels like #{feels_like})"
   return string
+end
+
+def exit(target=nil, user)
+  return '' unless user.can('exit')
+  ShowdownBot.exit
 end
 
 def dice(target=nil, user)
