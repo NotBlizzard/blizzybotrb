@@ -18,6 +18,7 @@ class String
 
   def can(command)
     if self =~ /\W\s*#{@owner}/i then return true end
+
     groups = {  
         'unranked' => 0,
         '+' => 1,
@@ -35,10 +36,10 @@ class String
   end
 end
 
-def owner(target, user)
-  return "owner is #{@owner}"
+def exit(target=nil, user)
+  return '' unless user.can('exit')
+  ShowdownBot.exit
 end
-
 
 def dice(target=nil, user)
   return '' unless user.can('dice')

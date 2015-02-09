@@ -25,6 +25,10 @@ class ShowdownBot
     @ignore = ignore.each {|x| x.downcase}
   end
 
+  def self.exit
+    $ws.close
+  end
+
   def self.messages
     @messages
   end
@@ -34,11 +38,10 @@ class ShowdownBot
   end
 
   def run
-    ws = Faye::WebSocket::Client.new("ws://#{@server}/showdown/websocket")
+    $ws = Faye::WebSocket::Client.new("ws://#{@server}/showdown/websocket")
 
-    ws.on :message do |event|
-      event.data.gsub!(/^>/,'')
-      event.data.gsub!(/\n/,'')
+    $ws.on :message do |event|
+      event.data.gsub!(/(^>|\n)/,'')
       p event.data if @log
       event.data.split('\n').each do |m|
         m = m.split('|')
@@ -47,11 +50,11 @@ class ShowdownBot
           url = "http://play.pokemonshowdown.com/action.php"
           if @pass.nil? or @pass == ''
             data = RestClient.get url, :params => {:act => 'getassertion', :userid => @user, :challengekeyid => m[2], :challenge => m[3]}
-            ws.send("|/trn #{@user},0,#{data}")         
+            $ws.send("|/trn #{@user},0,#{data}")         
           else
             data = RestClient.post url, :act => 'login', :name => @user, :pass => @pass, :challengekeyid => m[2], :challenge => m[3]
             data = JSON.parse(data.split(']')[1])
-            ws.send("|/trn #{@user},0,#{data['assertion']}")
+            $ws.send("|/trn #{@user},0,#{data['assertion']}")
           end
 
         when 'pm'
@@ -63,12 +66,12 @@ class ShowdownBot
         when  'c:'
           room = m[0]
           user = m[3]
-          user_id = user[1..-1].downcase.gsub(/ /,'')
+          user_id = user.chars.to_a.select!{|x| x =~/([[:alpha:]]|[[:digit:]])/}.join
           if m[4][0] == @symbol and !@ignore.include? user_id
             begin
               cmd = m[4].split(@symbol)[1].split(' ')[0]
               arguments = m[4].split("#{cmd} ")[1] || nil
-              ws.send("#{room}|#{send cmd, arguments, user}") 
+              $ws.send("#{room}|#{send cmd, arguments, user}") 
             rescue
             end
           end
@@ -78,17 +81,16 @@ class ShowdownBot
           end
 
         when 'updateuser'
-          @rooms.each { |r| ws.send("|/join #{r}") }
+          @rooms.each { |r| $ws.send("|/join #{r}") }
 
         #Battle Parser: Basically, the bot battles using random moves.
-
         when 'updatechallenges'
           from = JSON.parse(m[2])
           if from.include? 'challengecup1vs1'
-            ws.send("|/accept #{from['challengesFrom'].invert['challengecup1vs1']}")
+            $ws.send("|/accept #{from['challengesFrom'].invert['challengecup1vs1']}")
             @tier = 'cc1v1'
           elsif from.include? 'randombattle'
-            ws.send("|/accept #{from['challengesFrom'].invert['randombattle']}")
+            $ws.send("|/accept #{from['challengesFrom'].invert['randombattle']}")
             @tier = 'randombattle'
           end
 
