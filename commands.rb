@@ -1,19 +1,23 @@
 require 'rest_client'
 require 'nokogiri'
 require 'open-uri'
-require 'yaml'
+require 'json'
 require 'cgi'
-
-WUNDERGROUND = YAML.load_file('config/options.yaml')['wunderground']
 
 require './parser.rb'
 
+if !File.exist?('config/ranks.json')
+  File.open('config/ranks.json','w') {|f| f.write("{}") }
+end
+
+$ranks = JSON.parse(File.read('config/ranks.json'))
+
+
+
 class String
-  $owner = YAML.load_file('config/options.yaml')['owner']
-  $ranks = YAML.load_file('config/ranks.yaml')
-    
+
   def can(command)
-    if (self.match(/\W\s*#{$owner}/i)) then return true end
+    if self =~ /\W\s*#{@owner}/i then return true end
     groups = {  
         'unranked' => 0,
         '+' => 1,
@@ -27,28 +31,14 @@ class String
     rank = self[0]
     if (!$ranks.include? command or groups[$ranks[command]] == 'unranked') then return true end
     if (!groups.keys.include? rank) then rank = 'unranked' end
-    if (groups[rank] >= groups[$ranks[command]])
-      return true
-    else
-      return false
-    end
+    return groups[rank] >= groups[$ranks[command]]
   end
 end
 
-def uptime(target=nil,user)
-  return (Time.now.to_i - TIME_NOW)
+def owner(target, user)
+  return "owner is #{@owner}"
 end
 
-def weather(target, user)
-  target = target.gsub(/ /,'').split(',')
-  city = target[0]
-  state = target[1]
-  data = JSON.parse(open("http://api.wunderground.com/api/#{WUNDERGROUND}/conditions/q/#{state}/#{city}.json").read)['current_observation']
-  temp = data['temperature_string'].gsub(/\(/,'/').gsub(/\)/,'')
-  feels_like = data['feelslike_string'].gsub(/\(/,'/').gsub(/\)/,'')
-  string = "#{data['display_location']['full']}: #{data['weather']}, #{temp}(Feels like #{feels_like})"
-  return string
-end
 
 def dice(target=nil, user)
   return '' unless user.can('dice')
@@ -83,26 +73,15 @@ def sudo(target, user)
     begin
       return eval(target)
     rescue
-      return "Error: I can not $sudo #{target}"
+      return "Error: I can not sudo #{target}"
     end
-  end
-end
-
-def last(target, user)
-  return '' unless user.can('last')
-  begin
-    target = target.downcase.gsub(/ /,'')
-    return "Last message of #{target} was \"#{ShowdownBot.messages[target][1]}\" at #{Time.at(ShowdownBot.messages[target][0].to_i)}."
-  rescue
-    return "I can't remember #{target}'s last message."
   end
 end
 
 def rank(target, user)
   return '' unless user.can('rank')
-  if !can('rank', user) then return '' end
-  if ($ranks[command].nil?) then command_rank = 'unranked' else command_rank = $ranks[command] end
-  return "The current rank for #{command} is #{command_rank}."
+  command_rank = $ranks[target] || "unranked"
+  return "The rank for #{target} is: #{command_rank}"
 end
 
 def google(target, user)
@@ -139,24 +118,13 @@ def fight(target, user)
   return message
 end
 
-def rank(target, user)
-  return '' unless user.can('rank')
-  begin
-    return "The command #{target} is set to: #{$ranks[target]}."
-  rescue
-    return "The command #{target} is set to: unranked."
-  end
-end
-
 def set(target, user)
   return '' unless user.can('set')
   target = target.gsub(/ /,'').split(',')
   command = target[0]
   rank = target[1]
-  ranks = ['unranked','+','%','@','#','&','~','off','']
-  if (!ranks.include? rank) then return "Have to be one of the following ranks: #{settableranks.join(', ')}" end
   $ranks[command] = rank
-  File.open('config/ranks.yaml','w') { |b| b.write($ranks.to_yaml)}
+  File.open('config/ranks.json','w') {|b| b.write($ranks.to_json)}
   return "The command #{command} is now set to #{rank}."
 end
 
@@ -207,7 +175,7 @@ end
 
 def echo(target, user)
   return '' unless user.can('echo')
-  if ((target.include? '/transferbucks' or target.include? '/tb') and (!user.match(/#{$owner}/i)))
+  if ((target.include? '/transferbucks' or target.include? '/tb') and (!user.match(/#{@owner}/i)))
     return ""
   else
     return target

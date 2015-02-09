@@ -5,17 +5,15 @@ require 'cleverbot-api'
 require 'rest_client'
 require 'nokogiri'
 require 'open-uri'
-require 'yaml'
 require 'json'
 
 
 class ShowdownBot
-  $current_team = false
-  $battleroom = nil
-  $messages = Hash.new
-  $team = Hash.new
-  $tier = nil
-  $bot = CleverBot.new
+  @current_team = false
+  @battleroom = nil
+  @team = {}
+  @tier = nil
+  @bot = CleverBot.new
   def initialize(user, pass = '', rooms, server, owner, symbol, log, ignore)
     @user = user
     @pass = pass
@@ -28,7 +26,11 @@ class ShowdownBot
   end
 
   def self.messages
-    $messages
+    @messages
+  end
+
+  def self.owner
+    @owner
   end
 
   def run
@@ -55,7 +57,7 @@ class ShowdownBot
         when 'pm'
           user = m[2]
           if m[4].downcase.include? @user.downcase
-            ws.send("|/pm #{user}, #{$bot.think m[4]}")
+            ws.send("|/pm #{user}, #{@bot.think m[4]}")
           end
           
         when  'c:'
@@ -71,9 +73,8 @@ class ShowdownBot
             end
           end
 
-          $messages[user_id] = [m[2],m[4].gsub(/"/,"\"")]
           if m[4].downcase.include? @user.downcase and m[4][0] != @symbol and @user.downcase != user_id and !@ignore.include? user_id
-            ws.send("#{room}|#{user[1..-1]}, #{($bot.think m[4].gsub(/#{@user}/,'')).downcase}")
+            ws.send("#{room}|#{user[1..-1]}, #{(@bot.think m[4].gsub(/#{@user}/,'')).downcase}")
           end
 
         when 'updateuser'
@@ -93,37 +94,37 @@ class ShowdownBot
 
         when 'request'
           team = JSON.parse(m[2])
-          if team.include? 'side' && $current_team == false
+          if team.include? 'side' && @current_team == false
             (0..5).each do |x|
-              $team[x] = team['side']['pokemon'][x]['ident'].gsub(/p1: /,'')
-              $current_team = true
+              @team[x] = team['side']['pokemon'][x]['ident'].gsub(/p1: /,'')
+              @current_team = true
             end
           end
 
         when 'player'
-          $battleroom = m[0].gsub(/[\n>]/,'')
+          @battleroom = m[0].gsub(/[\n>]/,'')
           if @tier == 'cc1v1'
-            ws.send("#{$battleroom}|/team #{rand(1...7)}")
+            ws.send("#{@battleroom}|/team #{rand(1...7)}")
           elsif @tier == 'randombattle'
-            ws.send("#{$battleroom}|/move #{rand(1...5)}")
+            ws.send("#{@battleroom}|/move #{rand(1...5)}")
           end
 
         when 'title'
-          $battleroom = m[0].gsub(/\n>/,'')
-          ws.send("#{$battleroom}|Good luck, have fun.")
+          @battleroom = m[0].gsub(/\n>/,'')
+          ws.send("#{@battleroom}|Good luck, have fun.")
 
         when '\n'
           if m.match(/(\Wwin|\Wlose)/)
-            ws.send("#{$battleroom}|good game.")
-            ws.send("#{$battleroom}|/leave #{$battleroom}")
+            ws.send("#{@battleroom}|good game.")
+            ws.send("#{@battleroom}|/leave #{@battleroom}")
           elsif m.include? 'faint'
             fainted_pokemon = message.split('faint|')[1].split('|')[0].gsub('p1a: ','').strip
-            if $team.has_value? fainted_pokemon
-              $team.delete($team.invert[fainted_pokemon])
-              ws.send("#{$battleroom}|/switch #{$team.invert[$team.invert.keys.sample]}")
+            if @team.has_value? fainted_pokemon
+              @team.delete(@team.invert[fainted_pokemon])
+              ws.send("#{@battleroom}|/switch #{@team.invert[@team.invert.keys.sample]}")
             end
           else
-            ws.send("#{$battleroom}|/move #{rand(1...5)}")
+            ws.send("#{@battleroom}|/move #{rand(1...5)}")
           end
         end
       end

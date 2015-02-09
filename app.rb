@@ -5,6 +5,7 @@ require './parser.rb'
 require 'eventmachine'
 require 'yaml'
 
+
 begin
   options = YAML.load_file('config/options.yaml')['bots']
 rescue
@@ -14,7 +15,7 @@ end
 
 EventMachine.run do
   options.each do |x|
-    bot = ShowdownBot.new(
+    ShowdownBot.new(
       x['user'],
       x['pass'],
       x['rooms'],
@@ -23,7 +24,6 @@ EventMachine.run do
       x['symbol'],
       x['log'],
       x['ignore']
-    )
-    bot.run
+    ).run
   end
 end
