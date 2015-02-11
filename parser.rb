@@ -13,8 +13,9 @@ class ShowdownBot
   @battleroom = nil
   @team = {}
   @tier = nil
-  @bot = CleverBot.new
-  def initialize(user, pass = '', rooms, server, owner, symbol, log, ignore)
+  #I have no idea, but it doesn't work unless it's a global variable.
+  $bot = CleverBot.new
+  def initialize(user, pass = '', rooms, server, owner, symbol, log)
     @user = user
     @pass = pass
     @rooms = rooms
@@ -22,7 +23,6 @@ class ShowdownBot
     @owner = owner
     @symbol = symbol
     @log = log
-    @ignore = ignore.each {|x| x.downcase}
   end
 
   def self.exit
@@ -60,14 +60,14 @@ class ShowdownBot
         when 'pm'
           user = m[2]
           if m[4].downcase.include? @user.downcase
-            ws.send("|/pm #{user}, #{@bot.think m[4]}")
+            @ws.send("|/pm #{user}, #{$bot.think m[4]}")
           end
           
         when  'c:'
           room = m[0]
           user = m[3]
-          user_id = user.chars.to_a.select!{|x| x =~/([[:alpha:]]|[[:digit:]])/}.join
-          if m[4][0] == @symbol and !@ignore.include? user_id
+          user_without_rank = user[1..-1]
+          if m[4][0] == @symbol
             begin
               cmd = m[4].split(@symbol)[1].split(' ')[0]
               arguments = m[4].split("#{cmd} ")[1] || nil
@@ -76,9 +76,9 @@ class ShowdownBot
             end
           end
 
-          if m[4].downcase.include? @user.downcase and m[4][0] != @symbol and @user.downcase != user_id and !@ignore.include? user_id
-            ws.send("#{room}|#{user[1..-1]}, #{(@bot.think m[4].gsub(/#{@user}/,'')).downcase}")
-          end
+          #if m[4].downcase.include? @user.downcase and m[4][0] != @symbol and user_without_rank != @user.downcase
+          #  @ws.send("#{room}|#{user[1..-1]}, #{($bot.think m[4].gsub(/#{@user}/,'')).downcase}")
+          #end
 
         when 'updateuser'
           @rooms.each { |r| @ws.send("|/join #{r}") }
@@ -106,27 +106,27 @@ class ShowdownBot
         when 'player'
           @battleroom = m[0].gsub(/[\n>]/,'')
           if @tier == 'cc1v1'
-            ws.send("#{@battleroom}|/team #{rand(1...7)}")
+            @ws.send("#{@battleroom}|/team #{rand(1...7)}")
           elsif @tier == 'randombattle'
-            ws.send("#{@battleroom}|/move #{rand(1...5)}")
+            @ws.send("#{@battleroom}|/move #{rand(1...5)}")
           end
 
         when 'title'
           @battleroom = m[0].gsub(/\n>/,'')
-          ws.send("#{@battleroom}|Good luck, have fun.")
+          @ws.send("#{@battleroom}|Good luck, have fun.")
 
         when '\n'
           if m.match(/(\Wwin|\Wlose)/)
-            ws.send("#{@battleroom}|good game.")
-            ws.send("#{@battleroom}|/leave #{@battleroom}")
+            @ws.send("#{@battleroom}|good game.")
+            @ws.send("#{@battleroom}|/leave #{@battleroom}")
           elsif m.include? 'faint'
             fainted_pokemon = message.split('faint|')[1].split('|')[0].gsub('p1a: ','').strip
             if @team.has_value? fainted_pokemon
               @team.delete(@team.invert[fainted_pokemon])
-              ws.send("#{@battleroom}|/switch #{@team.invert[@team.invert.keys.sample]}")
+              @ws.send("#{@battleroom}|/switch #{@team.invert[@team.invert.keys.sample]}")
             end
           else
-            ws.send("#{@battleroom}|/move #{rand(1...5)}")
+            @ws.send("#{@battleroom}|/move #{rand(1...5)}")
           end
         end
       end

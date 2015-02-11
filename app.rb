@@ -22,8 +22,7 @@ EventMachine.run do
       x['server'],
       x['owner'],
       x['symbol'],
-      x['log'],
-      x['ignore']
+      x['log']
     ).run
   end
 end

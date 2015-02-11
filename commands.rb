@@ -144,22 +144,6 @@ def pick(target, user)
   return "Hmm, I randomly picked #{randompick}."
 end
 
-#def dex(target=nil, user)
-# return '' unless user.can('dex')
-#  if target.nil?
-#    target = File.readlines('data/pokemon.txt').sample.strip
-#  end
-  #begin
-#  url = Nokogiri::HTML(open("http://bulbapedia.bulbagarden.net/wiki/#{target.capitalize}_(Pokemon)"))
-#  egg = url.css('a[href="/wiki/Species"]')[0].content
-#  flavor_text = url.css('td[class="roundy" and vertical-align="center"]')
-#  print "FLAVOR IS #{flavor_text}"
-  #return "#{target.capitalize}, the #{egg}. #{flavor_text}"
-  #rescue
-   # return "Seems like there is no Pokemon named #{target.capitalize}."
-  #end
-#end
-
 def urban(target=nil, user)
   return '' unless user.can('urban')
   if target.nil?
