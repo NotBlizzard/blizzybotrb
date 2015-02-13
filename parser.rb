@@ -48,7 +48,7 @@ class ShowdownBot
         case m[1]
         when 'challstr'
           url = "http://play.pokemonshowdown.com/action.php"
-          if @pass.nil? or @pass == ''
+          if @pass.nil?
             data = RestClient.get url, :params => {:act => 'getassertion', :userid => @user, :challengekeyid => m[2], :challenge => m[3]}
             @ws.send("|/trn #{@user},0,#{data}")         
           else
@@ -83,7 +83,6 @@ class ShowdownBot
         when 'updateuser'
           @rooms.each { |r| @ws.send("|/join #{r}") }
 
-        #Battle Parser: Basically, the bot battles using random moves.
         when 'updatechallenges'
           from = JSON.parse(m[2])
           if from.include? 'challengecup1vs1'

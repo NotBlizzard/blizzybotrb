@@ -160,19 +160,12 @@ end
 
 def echo(target, user)
   return '' unless user.can('echo')
-  if ((target.include? '/transferbucks' or target.include? '/tb') and (!user.match(/#{@owner}/i)))
-    return ""
-  else
-    return target
-  end
+  return target
 end
 
 def define(target, user)
   return '' unless user.can('define')
   begin
-    if target == 'dead'
-      return "dead: Gold's server."
-    end
     dictionary = Nokogiri::HTML(open("http://www.dictionary.reference.com/browse/#{target.downcase}"))
     return "#{target}: #{dictionary.css('.def-content')[0].content.strip}"
   rescue
