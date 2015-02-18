@@ -1,4 +1,4 @@
-require './commands.rb'
+require './commands'
 
 require 'faye/websocket'
 require 'cleverbot-api'
@@ -16,12 +16,12 @@ class ShowdownBot
   #I have no idea, but it doesn't work unless it's a global variable.
   $bot = CleverBot.new
   def initialize(user, pass = '', rooms, server, owner, symbol, log)
-    @user = user
-    @pass = pass
-    @rooms = rooms
     @server = server
-    @owner = owner
     @symbol = symbol
+    @owner = owner
+    @rooms = rooms
+    @pass = pass
+    @user = user
     @log = log
   end
 
@@ -76,9 +76,9 @@ class ShowdownBot
             end
           end
 
-          #if m[4].downcase.include? @user.downcase and m[4][0] != @symbol and user_without_rank != @user.downcase
-          #  @ws.send("#{room}|#{user[1..-1]}, #{($bot.think m[4].gsub(/#{@user}/,'')).downcase}")
-          #end
+          if m[4].downcase.include? @user.downcase and m[4][0] != @symbol and user_without_rank != @user.downcase
+            @ws.send("#{room}|#{user[1..-1]}, #{($bot.think m[4].gsub(/#{@user}/,'')).downcase}")
+          end
 
         when 'updateuser'
           @rooms.each { |r| @ws.send("|/join #{r}") }

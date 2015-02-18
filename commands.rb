@@ -36,6 +36,11 @@ class String
   end
 end
 
+def slap(target=nil, user)
+  return '' unless user.can('slap')
+  return "/me slaps #{target} with a fish."
+end
+
 def exit(target=nil, user)
   return '' unless user.can('exit')
   ShowdownBot.exit
