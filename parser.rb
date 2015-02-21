@@ -9,12 +9,13 @@ require 'json'
 
 
 class ShowdownBot
+  attr_accessor :owner
+
   @current_team = false
   @battleroom = nil
   @team = {}
   @tier = nil
-  #I have no idea, but it doesn't work unless it's a global variable.
-  $bot = CleverBot.new
+  $cleverbot = CleverBot.new
   def initialize(user, pass = '', rooms, server, owner, symbol, log)
     @server = server
     @symbol = symbol
@@ -27,14 +28,6 @@ class ShowdownBot
 
   def self.exit
     @ws.close
-  end
-
-  def self.messages
-    @messages
-  end
-
-  def self.owner
-    @owner
   end
 
   def run
@@ -50,7 +43,7 @@ class ShowdownBot
           url = "http://play.pokemonshowdown.com/action.php"
           if @pass.nil?
             data = RestClient.get url, :params => {:act => 'getassertion', :userid => @user, :challengekeyid => m[2], :challenge => m[3]}
-            @ws.send("|/trn #{@user},0,#{data}")         
+            @ws.send("|/trn #{@user},0,#{data}")
           else
             data = RestClient.post url, :act => 'login', :name => @user, :pass => @pass, :challengekeyid => m[2], :challenge => m[3]
             data = JSON.parse(data.split(']')[1])
@@ -60,9 +53,9 @@ class ShowdownBot
         when 'pm'
           user = m[2]
           if m[4].downcase.include? @user.downcase
-            @ws.send("|/pm #{user}, #{$bot.think m[4]}")
+            @ws.send("|/pm #{user}, #{$cleverbot.think m[4]}")
           end
-          
+
         when  'c:'
           room = m[0]
           user = m[3]
@@ -71,13 +64,14 @@ class ShowdownBot
             begin
               cmd = m[4].split(@symbol)[1].split(' ')[0]
               arguments = m[4].split("#{cmd} ")[1] || nil
-              @ws.send("#{room}|#{send cmd, arguments, user}") 
+              @ws.send("#{room}|#{send cmd, arguments, user}")
             rescue
             end
           end
 
           if m[4].downcase.include? @user.downcase and m[4][0] != @symbol and user_without_rank != @user.downcase
-            @ws.send("#{room}|#{user[1..-1]}, #{($bot.think m[4].gsub(/#{@user}/,'')).downcase}")
+            response = $cleverbot.think m[4].gsub(/#{@user}/,'').downcase!
+            @ws.send("#{room}|#{user_without_rank}, #{response}")
           end
 
         when 'updateuser'
