@@ -2,6 +2,7 @@ require 'rest_client'
 require 'nokogiri'
 require 'open-uri'
 require 'json'
+require 'yaml'
 require 'cgi'
 
 require './parser.rb'
@@ -11,16 +12,16 @@ if !File.exist?('config/ranks.json')
 end
 
 $ranks = JSON.parse(File.read('config/ranks.json'))
-
+$owner = YAML.load_file('config/options.yaml')['owner']
 
 
 class String
 
   def can(command)
-    if self =~ /\W\s*#{@owner}/i then return true end
+    if self =~ /\W\s*#{$owner}/i then return true end
 
-    groups = {  
-        'unranked' => 0,
+    groups = {
+        ' ' => 0,
         '+' => 1,
         '%' => 2,
         '@' => 3,
@@ -30,8 +31,8 @@ class String
         'off' => 6
     }
     rank = self[0]
-    if (!$ranks.include? command or groups[$ranks[command]] == 'unranked') then return true end
-    if (!groups.keys.include? rank) then rank = 'unranked' end
+    if (!$ranks.include? command or groups[$ranks[command]] == ' ') then return true end
+    if (!groups.keys.include? rank) then rank = ' ' end
     return groups[rank] >= groups[$ranks[command]]
   end
 end
@@ -61,7 +62,7 @@ def dice(target=nil, user)
         return "Range can't be over 99."
       end
       rolls = []
-      dice.times do 
+      dice.times do
         rolls << Random.rand(1..range.to_i)
       end
       return "#{dice} #{range}-sided Dice: #{rolls.join(', ')}. Total : #{rolls.inject(:+)}"
@@ -72,8 +73,8 @@ def dice(target=nil, user)
 end
 
 def sudo(target, user)
-  return '' unless user.can('sudo')
-  if target.tainted? 
+  #return '' unless user.can('sudo')
+  if target.tainted?
     return 'Tainted input.'
   else
     begin
@@ -105,7 +106,7 @@ def salt(target, user)
 end
 
 def reload(target, user)
-  return '' unless user.can('reload')
+  #return '' unless user.can('reload')
   begin
     load './commands.rb'
     return "Commands reloaded."

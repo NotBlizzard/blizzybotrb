@@ -26,6 +26,10 @@ class ShowdownBot
     @log = log
   end
 
+  def self.owner
+    @owner
+  end
+
   def self.exit
     @ws.close
   end

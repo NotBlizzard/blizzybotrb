@@ -7,23 +7,21 @@ require 'yaml'
 
 
 begin
-  options = YAML.load_file('config/options.yaml')['bots']
+  options = YAML.load_file('config/options.yaml')
 rescue
   puts "You need to rename 'options-example.yaml' to 'options.yaml'\nin /config and add your credentials."
-  exit!
+  eoptionsit!
 end
 
 EventMachine.run do
-  options.each do |x|
-    ShowdownBot.new(
-      x['user'],
-      x['pass'],
-      x['rooms'],
-      x['server'],
-      x['owner'],
-      x['symbol'],
-      x['log']
-    ).run
-  end
+  ShowdownBot.new(
+    options['user'],
+    options['pass'],
+    options['rooms'],
+    options['server'],
+    options['owner'],
+    options['symbol'],
+    options['log']
+  ).run
 end
 
