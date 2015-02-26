@@ -72,8 +72,18 @@ def dice(target=nil, user)
   end
 end
 
+def whois(target, user)
+  return '' unless user.can('whois')
+  if target.nil?
+    return ''
+  end
+  adj = File.readlines('data/adjectives.txt').sample.strip
+  noun = File.readlines('data/nouns.txt').sample.strip
+  return "#{target} is a(n) #{adj} #{noun}."
+end
+
 def sudo(target, user)
-  #return '' unless user.can('sudo')
+  return '' unless user.can('sudo')
   if target.tainted?
     return 'Tainted input.'
   else
