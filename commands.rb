@@ -1,22 +1,32 @@
 require 'rest_client'
 require 'nokogiri'
 require 'open-uri'
-require 'json'
-require 'yaml'
+
 require 'cgi'
 
 require './parser.rb'
+require './helpers.rb'
 
 if !File.exist?('config/ranks.json')
   File.open('config/ranks.json','w') {|f| f.write("{}") }
 end
 
-$ranks = JSON.parse(File.read('config/ranks.json'))
-$owner = YAML.load_file('config/options.yaml')['owner']
 
+
+class Array
+  def englishize
+    if self.length == 2
+      return self.join(' and ')
+    else
+      last_element = self.last
+      new_arr = self - Array(last_element)
+      str = new_arr.join(', ')
+      return "#{str}, and #{last_element}"
+    end
+  end
+end
 
 class String
-
   def can(command)
     if self =~ /\W\s*#{$owner}/i then return true end
 
@@ -128,10 +138,17 @@ end
 def fight(target, user)
   return '' unless user.can('fight')
   target = target.split(',')
-  person1 = target[0]
-  person2 = target[1]
-  if Random.rand(0..1) == 1 then userpicked = person1 else userpicked = person2 end
-  message = "If #{person1} and #{person2} were to fight, #{userpicked} would have a #{Random.rand(0..100)}% chance of winning."
+  if target.length > 2
+    nums = []
+    (target.length.to_i - 1).times.reduce([]) do |a|
+      max = 100 - a.inject(:+).to_i
+      nums << Random.rand(0..max)
+    end
+    nums << 100 - nums.inject(:+)
+    message = "If #{target.englishize} were to fight, #{target.sample} would have the best chance of winning with #{nums.max}%."
+  else
+    message = "If #{target[0]} and #{target[1]} were to fight, #{target.sample} would have a #{Random.rand(0..100)}% chance of winning."
+  end
   return message
 end
 
