@@ -5,12 +5,12 @@ require './parser.rb'
 require 'eventmachine'
 require 'yaml'
 
-
 begin
   options = YAML.load_file('config/options.yaml')
 rescue
-  puts "You need to rename 'options-example.yaml' to 'options.yaml'\nin /config and add your credentials."
-  eoptionsit!
+  puts "You need to rename 'options-example.yaml' to 'options.yaml'\n
+        in /config and add your credentials."
+  exit!
 end
 
 EventMachine.run do
@@ -24,4 +24,3 @@ EventMachine.run do
     options['log']
   ).run
 end
-

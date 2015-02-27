@@ -9,7 +9,7 @@ require 'json'
 
 
 class ShowdownBot
-  attr_accessor :owner
+  attr_reader :owner
 
   @current_team = false
   @battleroom = nil
@@ -26,10 +26,6 @@ class ShowdownBot
     @log = log
   end
 
-  def self.owner
-    @owner
-  end
-
   def self.exit
     @ws.close
   end
@@ -38,18 +34,20 @@ class ShowdownBot
     @ws = Faye::WebSocket::Client.new("ws://#{@server}/showdown/websocket")
 
     @ws.on :message do |event|
-      event.data.gsub!(/(^>|\n)/,'')
+      event.data.gsub!(/(^>|\n)/, '')
       p event.data if @log
       event.data.split('\n').each do |m|
         m = m.split('|')
         case m[1]
         when 'challstr'
-          url = "http://play.pokemonshowdown.com/action.php"
+          url = 'http://play.pokemonshowdown.com/action.php'
           if @pass.nil?
-            data = RestClient.get url, :params => {:act => 'getassertion', :userid => @user, :challengekeyid => m[2], :challenge => m[3]}
+            data = RestClient.get url, params  { act: 'getassertion', userid: @user,
+                                                challengekeyid: m[2], challenge: m[3] }
             @ws.send("|/trn #{@user},0,#{data}")
           else
-            data = RestClient.post url, :act => 'login', :name => @user, :pass => @pass, :challengekeyid => m[2], :challenge => m[3]
+            data = RestClient.post url, act: 'login', name: @user, pass: @pass,
+                                        challengekeyid: m[2], challenge: m[3]
             data = JSON.parse(data.split(']')[1])
             @ws.send("|/trn #{@user},0,#{data['assertion']}")
           end
@@ -73,8 +71,8 @@ class ShowdownBot
             end
           end
 
-          if m[4].downcase.include? @user.downcase and m[4][0] != @symbol and user_without_rank != @user.downcase
-            response = $cleverbot.think m[4].gsub(/#{@user}/,'').downcase!
+          if m[4].downcase.include? @user.downcase && m[4][0] != @symbol && user_without_rank != @user.downcase
+            response = $cleverbot.think m[4].gsub(/#{@user}/, '').downcase!
             @ws.send("#{room}|#{user_without_rank}, #{response}")
           end
 
@@ -95,13 +93,13 @@ class ShowdownBot
           team = JSON.parse(m[2])
           if team.include? 'side' && @current_team == false
             (0..5).each do |x|
-              @team[x] = team['side']['pokemon'][x]['ident'].gsub(/p1: /,'')
+              @team[x] = team['side']['pokemon'][x]['ident'].gsub(/p1: /, '')
               @current_team = true
             end
           end
 
         when 'player'
-          @battleroom = m[0].gsub(/[\n>]/,'')
+          @battleroom = m[0].gsub(/[\n>]/, '')
           if @tier == 'cc1v1'
             @ws.send("#{@battleroom}|/team #{rand(1...7)}")
           elsif @tier == 'randombattle'
