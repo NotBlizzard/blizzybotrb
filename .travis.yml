@@ -3,6 +3,8 @@ language: ruby
 rvm:
   - 2.1.0
 
-before_install: cp travis-options.yaml options.yaml
+before_install:
+  - cp travis-options.yaml options.yaml
+  - gem install nokogiri
 
 script: ruby app.rb
