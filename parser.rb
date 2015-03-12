@@ -42,12 +42,10 @@ class ShowdownBot
         when 'challstr'
           url = 'http://play.pokemonshowdown.com/action.php'
           if @pass.nil?
-            data = RestClient.get url, params  { act: 'getassertion', userid: @user,
-                                                challengekeyid: m[2], challenge: m[3] }
+            data = RestClient.get url, :params => {:act => 'getassertion', :userid => @user, :challengekeyid => m[2], :challenge => m[3]}
             @ws.send("|/trn #{@user},0,#{data}")
           else
-            data = RestClient.post url, act: 'login', name: @user, pass: @pass,
-                                        challengekeyid: m[2], challenge: m[3]
+            data = RestClient.post url, :act => 'login', :name => @user, :pass => @pass, :challengekeyid => m[2], :challenge => m[3]
             data = JSON.parse(data.split(']')[1])
             @ws.send("|/trn #{@user},0,#{data['assertion']}")
           end

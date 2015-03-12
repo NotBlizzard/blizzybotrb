@@ -6,7 +6,7 @@ require 'eventmachine'
 require 'yaml'
 
 begin
-  options = YAML.load_file('config/options.yaml')
+  options = YAML.load_file('options.yaml')
 rescue
   puts "You need to rename 'options-example.yaml' to 'options.yaml'\n
         in /config and add your credentials."

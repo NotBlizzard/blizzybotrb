@@ -7,11 +7,9 @@ require 'cgi'
 require './parser.rb'
 require './helpers.rb'
 
-unless File.exist?('config/ranks.json')
-  File.open('config/ranks.json', 'w') { |f| f.write('{}') }
+unless File.exist?('ranks.json')
+  File.open('ranks.json', 'w') { |f| f.write('{}') }
 end
-
-RANKS = JSON.parse(File.read('config/RANKS.json'))
 
 def slap(target = nil, user)
   return '' unless user.can('slap')
@@ -124,7 +122,7 @@ def set(target, user)
   command  =  target[0]
   rank  =  target[1]
   RANKS[command]  =  rank
-  File.open('config/RANKS.json ', 'w') { |b| b.write(RANKS.to_json) }
+  File.open('ranks.json ', 'w') { |b| b.write(RANKS.to_json) }
   "The command #{command} is now set to #{rank}."
 end
 

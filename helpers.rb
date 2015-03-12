@@ -1,8 +1,8 @@
 require 'json'
 require 'yaml'
 
-RANKS = JSON.parse(File.read('config/ranks.json'))
-owner = YAML.load_file('config/options.yaml')['owner']
+RANKS = JSON.parse(File.read('ranks.json'))
+owner = YAML.load_file('options.yaml')['owner']
 
 class Array
   # Used to add Array#Englishize module.
