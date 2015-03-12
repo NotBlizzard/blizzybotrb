@@ -1,0 +1,8 @@
+language: ruby
+
+rvm:
+  - 2.1.0
+
+before_install: cp travis-options.yaml options.yaml
+
+script: ruby app.rb
