@@ -76,7 +76,7 @@ end
 
 def google(target, user)
   return '' unless user.can('google')
-  url  =  "http://www.google.com/search?q = #{CGI.escape(target)}"
+  url  =  "http://www.google.com/search?q=#{CGI.escape(target)}"
   data  =  Nokogiri::HTML(open(url)).at('h3.r')
   data_string = data.at('./following::div').children.first.text
   data_string.gsub!(/(CachedSimilar|Cached)/, '')
@@ -141,12 +141,13 @@ def pick(target, user)
   "Hmm, I randomly picked #{randompick}."
 end
 
-def urban(target = nil, user)
+def urban(target, user)
   return '' unless user.can('urban')
-  url = 'http://api.urbandictionary.com/v0/random' if target.nil?
   target = target.split(' ').join('+') if target.include? ' '
-  url = "http://api.urbandictionary.com/v0/define?term = #{target}"
+  url = "http://api.urbandictionary.com/v0/define?term=#{target}"
+  url = 'http://api.urbandictionary.com/v0/random' if target.nil?
   urban = JSON.parse(RestClient.get url)
+  puts '.lol.'
   "#{urban['list'][0]['word']}: #{urban['list'][0]['definition'].gsub(/[\[\]\n]/, '')}"
 end
 
