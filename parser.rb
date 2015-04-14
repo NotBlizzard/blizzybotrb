@@ -1,7 +1,7 @@
 require './commands'
 
 require 'faye/websocket'
-require 'cleverbot-api'
+#require 'cleverbot-api'
 require 'rest_client'
 require 'nokogiri'
 require 'open-uri'
@@ -15,7 +15,7 @@ class ShowdownBot
   @battleroom = nil
   @team = {}
   @tier = nil
-  $cleverbot = CleverBot.new
+  #$cleverbot = CleverBot.new
   def initialize(user, pass = '', rooms, server, owner, symbol, log)
     @server = server
     @symbol = symbol
@@ -52,14 +52,13 @@ class ShowdownBot
 
         when 'pm'
           user = m[2]
-          if m[4].downcase.include? @user.downcase
-            @ws.send("|/pm #{user}, #{$cleverbot.think m[4]}")
-          end
+          #if m[4].downcase.include? @user.downcase
+          #  @ws.send("|/pm #{user}, #{$cleverbot.think m[4]}")
+          #end
 
         when  'c:'
           room = m[0]
           user = m[3]
-          user_without_rank = user[1..-1]
           if m[4][0] == @symbol
             begin
               cmd = m[4].split(@symbol)[1].split(' ')[0]
@@ -69,10 +68,10 @@ class ShowdownBot
             end
           end
 
-          if m[4].downcase.include? @user.downcase && m[4][0] != @symbol && user_without_rank != @user.downcase
-            response = $cleverbot.think m[4].gsub(/#{@user}/, '').downcase!
-            @ws.send("#{room}|#{user_without_rank}, #{response}")
-          end
+          #if m[4].downcase.include? @user.downcase && user[1..-1].downcase != @user.downcase
+          #  response = $cleverbot.think m[4].gsub(/#{@user}/, '').downcase!
+          #  @ws.send("#{room}|#{user[1..-1]}, #{response}")
+          #end
 
         when 'updateuser'
           @rooms.each { |r| @ws.send("|/join #{r}") }

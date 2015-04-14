@@ -2,10 +2,9 @@ require 'json'
 require 'yaml'
 
 RANKS = JSON.parse(File.read('ranks.json'))
-owner = YAML.load_file('options.yaml')['owner']
+OWNER = YAML.load_file('options.yaml')['owner']
 
 class Array
-  # Used to add Array#Englishize module.
   def englishize
     if self.length == 2
       return self.join(' and ')
@@ -19,9 +18,8 @@ class Array
 end
 
 class String
-  # Used to add String#Can module.
   def can(cmd)
-    return true if self =~ /\W\s*#{owner}/i
+    return true if self =~ /\W\s*#{OWNER}/i
     groups = {
         ' ' => 0,
         '+' => 1,
