@@ -16,6 +16,13 @@ def slap(target = nil, user)
   "/me slaps #{target} with a fish."
 end
 
+def trivia(_, user)
+  return '' unless user.can('trivia')
+  url = "http://mentalfloss.com/api/1.0/views/amazing_facts.json?limit=1"
+  data = JSON.parse(RestClient.get url)
+  data[0]['nid'].gsub(/<?(\/)p>/,'').gsub('<p>','')
+end
+
 def exit(_, user)
   return '' unless user.can('exit')
   ShowdownBot.exit
