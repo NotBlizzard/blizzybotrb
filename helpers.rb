@@ -21,7 +21,7 @@ class String
   def can(cmd)
     return true if self =~ /\W\s*#{OWNER}/i
     groups = {
-        ' ' => 0,
+        'u' => 0,
         '+' => 1,
         '%' => 2,
         '@' => 3,
@@ -30,9 +30,11 @@ class String
         '~' => 5,
         'off' => 6
     }
-    rank = self[0]
-    return true unless (RANKS.include? command) || (groups[RANKS[cmd]] == ' ')
-    rank = ' ' unless groups.keys.include? rank
-    groups[rank] >= groups[RANKS[cmd]]
+    r = self[0]
+    if not groups.keys.include? r
+      r = 'u'
+    end
+    return groups[r] >= groups[RANKS[cmd]]
+
   end
 end

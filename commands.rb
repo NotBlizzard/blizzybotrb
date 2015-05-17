@@ -1,6 +1,8 @@
 require 'rest_client'
 require 'nokogiri'
 require 'open-uri'
+require 'rubygems'
+require 'eval_in'
 
 require 'cgi'
 
@@ -62,17 +64,16 @@ def whois(target, user)
   "#{target} is a(n) #{adj} #{noun}."
 end
 
-def sudo(target, user)
-  return '' unless user.can('sudo')
-  if target.tainted?
-    return 'Tainted input.'
-  else
-    begin
-      return eval(target)
-    rescue
-      return "Error: I can not sudo #{target}"
-    end
-  end
+def ship(target, user)
+  return '' unless user.can('ship')
+  users = target.gsub(' ','').split(',').map(&:downcase)
+  "#{users[0]} and #{users[1]}'s relationship is #{Random.rand(1..100)}% strong."
+end
+
+def eval(target, user)
+  #return '' unless user.can('sudo')
+  result = EvalIn.call target, language: "ruby/mri-2.1"
+  result.output
 end
 
 def rank(target, user)
@@ -81,15 +82,15 @@ def rank(target, user)
   "The rank for #{target} is: #{command_rank}"
 end
 
-def google(target, user)
-  return '' unless user.can('google')
-  url  =  "http://www.google.com/search?q=#{CGI.escape(target)}"
-  data  =  Nokogiri::HTML(open(url)).at('h3.r')
-  data_string = data.at('./following::div').children.first.text
-  data_string.gsub!(/(CachedSimilar|Cached)/, '')
-  text  =  data.text
-  "#{text} | #{data_string}"
-end
+#def google(target, user)
+# return '' unless user.can('google')
+#  url  =  "http://www.google.com/search?q=#{CGI.escape(target)}"
+#  data  =  Nokogiri::HTML(open(url)).at('h3.r')
+#  data_string = data.at('./following::div').children.first.text
+#  data_string.gsub!(/(CachedSimilar|Cached)/, '')
+#  text  =  data.text
+#  "#{text} | #{data_string}"
+#end
 
 def salt(target, user)
   return '' unless user.can('salt')
@@ -100,6 +101,7 @@ def reload(_, user)
   return '' unless user.can('reload')
   begin
     load './commands.rb'
+    load './helpers.rb'
     'Commands reloaded.'
   rescue
     return 'Error.'
@@ -123,11 +125,12 @@ def fight(target, user)
   message
 end
 
+
 def set(target, user)
   return '' unless user.can('set')
-  target  =  target.gsub(/ /, '').split(',')
-  command  =  target[0]
-  rank  =  target[1]
+  target = target.gsub(/ /, '').split(',')
+  command = target[0]
+  rank = target[1]
   RANKS[command]  =  rank
   File.open('ranks.json ', 'w') { |b| b.write(RANKS.to_json) }
   "The command #{command} is now set to #{rank}."
