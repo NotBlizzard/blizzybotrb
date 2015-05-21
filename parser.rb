@@ -10,12 +10,14 @@ require 'json'
 
 class ShowdownBot
   attr_reader :owner
+  attr_accessor :ws
 
   @current_team = false
   @battleroom = nil
   @team = {}
   @tier = nil
   $cleverbot = CleverBot.new
+  @ws = nil
   def initialize(user, pass = '', rooms, server, owner, symbol, log)
     @server = server
     @symbol = symbol
@@ -26,9 +28,11 @@ class ShowdownBot
     @log = log
   end
 
-  def self.exit
-    @ws.close
+  def say(room, msg)
+    @ws.send("#{room}|#{msg}")
   end
+
+
 
   def run
     @ws = Faye::WebSocket::Client.new("ws://#{@server}/showdown/websocket")
@@ -63,7 +67,7 @@ class ShowdownBot
             begin
               cmd = m[4].split(@symbol)[1].split(' ')[0]
               arguments = m[4].split("#{cmd} ")[1] || nil
-              @ws.send("#{room}|#{send cmd, arguments, user}")
+              @ws.send("#{room}|#{self.send cmd, arguments, room, user}")
             rescue
             end
           end
@@ -125,3 +129,4 @@ class ShowdownBot
     end
   end
 end
+

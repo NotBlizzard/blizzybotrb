@@ -70,10 +70,9 @@ def ship(target, user)
   "#{users[0]} and #{users[1]}'s relationship is #{Random.rand(1..100)}% strong."
 end
 
-def eval(target, user)
-  #return '' unless user.can('sudo')
-  result = EvalIn.call target, language: "ruby/mri-2.1"
-  result.output
+def sudo(target, user)
+  return '' unless user.can('sudo')
+  return "#{eval(target)}"
 end
 
 def rank(target, user)
@@ -106,6 +105,11 @@ def reload(_, user)
   rescue
     return 'Error.'
   end
+end
+
+def restart(_, user)
+  return '' unless user.can('reload')
+  load './parser.rb'
 end
 
 def fight(target, user)
@@ -145,10 +149,10 @@ def helix(_, user)
   File.readlines('data/helix.txt').sample
 end
 
-def pick(target, user)
+def pick(target,room, user)
   return '' unless user.can('pick')
   randompick = target.split(',').sample
-  "Hmm, I randomly picked #{randompick}."
+  self.class.say(room,"Hmm, I randomly picked #{randompick}.")
 end
 
 def urban(target, user)

@@ -1,8 +1,8 @@
 require 'json'
 require 'yaml'
 
-RANKS = JSON.parse(File.read('ranks.json'))
-OWNER = YAML.load_file('options.yaml')['owner']
+$ranks = JSON.parse(File.read('ranks.json'))
+$owner = YAML.load_file('options.yaml')['owner']
 
 class Array
   def englishize
@@ -19,7 +19,7 @@ end
 
 class String
   def can(cmd)
-    return true if self =~ /\W\s*#{OWNER}/i
+    return true if self =~ /\W\s*#{$owner}/i
     groups = {
         'u' => 0,
         '+' => 1,
@@ -34,7 +34,7 @@ class String
     if not groups.keys.include? r
       r = 'u'
     end
-    return groups[r] >= groups[RANKS[cmd]]
+    return groups[r] >= groups[$ranks[cmd]]
 
   end
 end
