@@ -6,5 +6,6 @@ rvm:
 before_install:
   - cp travis-options.yaml options.yaml
   - gem install nokogiri
+  - cp travis-ranks.json ranks.json
 
 script: ruby app.rb
