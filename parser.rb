@@ -30,6 +30,7 @@ class ShowdownBot
 
   def say(room, msg)
     @ws.send("#{room}|#{msg}")
+    return ""
   end
 
 

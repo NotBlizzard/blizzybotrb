@@ -21,8 +21,12 @@ def slap(args, room, user)
   self.say(room, "/me slaps #{args} with a fish.")
 end
 
-def flip(_, room, _)
-  self.say(room,"(╯°□°）╯︵ ┻━┻")
+def flip(arg, room, _)
+  if arg.nil?
+    self.say(room,"(╯°□°）╯︵ ┻━┻")
+  else
+    self.say(room,"(╯°□°）╯︵ #{arg.flip}")
+  end
 end
 
 def trivia(_,room, user)
@@ -103,14 +107,14 @@ def salt(args, user)
   "#{args} is #{(Random.rand(0.0..100.0)).round(2)}% salty."
 end
 
-def reload(_, _, user)
-  return '' unless user.can('reload')
+def reload(_, room, user)
+  #return '' unless user.can('reload')
   begin
     load './commands.rb'
     load './helpers.rb'
-    'Commands reloaded.'
+    self.say(room, 'Commands reloaded.')
   rescue
-    return 'Error.'
+    self.say(room, 'Error.')
   end
 end
 
@@ -139,7 +143,7 @@ def set(args, room, user)
   rank = args[1]
   RANKS[command]  =  rank
   File.open('ranks.json ', 'w') { |b| b.write(RANKS.to_json) }
-  "The command #{command} is now set to #{rank}."
+  this.say(room, "The command #{command} is now set to #{rank}.")
 end
 
 def about(_,room, _)

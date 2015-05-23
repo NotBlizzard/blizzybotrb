@@ -18,6 +18,11 @@ class Array
 end
 
 class String
+
+  def flip
+    self.downcase.tr!('a-z','ɐqɔpǝɟƃɥᴉɾʞlɯuodbɹsʇnʌʍxʎz').reverse
+  end
+
   def can(cmd)
     return true if self =~ /\W\s*#{$owner}/i
     groups = {
