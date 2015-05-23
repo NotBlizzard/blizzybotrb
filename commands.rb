@@ -2,7 +2,6 @@ require 'rest_client'
 require 'nokogiri'
 require 'open-uri'
 require 'rubygems'
-require 'eval_in'
 
 require 'cgi'
 
