@@ -12,77 +12,85 @@ unless File.exist?('ranks.json')
   File.open('ranks.json', 'w') { |f| f.write('{}') }
 end
 
-def slap(target = nil, user)
+# def foo(args, room, user)
+#   self.say(room, "Hello")
+# end
+
+def slap(args, room, user)
   return '' unless user.can('slap')
-  "/me slaps #{target} with a fish."
+  self.say(room, "/me slaps #{args} with a fish.")
 end
 
-def trivia(_, user)
+def flip(_, room, _)
+  self.say(room,"(╯°□°）╯︵ ┻━┻")
+end
+
+def trivia(_,room, user)
   return '' unless user.can('trivia')
   url = "http://mentalfloss.com/api/1.0/views/amazing_facts.json?limit=1"
   data = JSON.parse(RestClient.get url)
-  data[0]['nid'].gsub(/<?(\/)p>/,'').gsub('<p>','')
+  self.say(room, data[0]['nid'].gsub(/<?(\/)p>/,'').gsub('<p>',''))
 end
 
-def exit(_, user)
+def exit(_,_, user)
   return '' unless user.can('exit')
   ShowdownBot.exit
 end
 
-def dice(target = nil, user)
+def dice(args=nil, room, user)
   return '' unless user.can('dice')
-  if target.nil?
+  if args.nil?
     return "1 6-sided Die: #{Random.rand(1..6)}"
   else
-    if target.include? 'd'
-      target  =  target.to_s.split('d')
-      dice  =  target[0].to_i
-      range  =  target[1].to_i
+    if args.include? 'd'
+      args  =  args.to_s.split('d')
+      dice  =  args[0].to_i
+      range  =  args[1].to_i
       if dice > 20
-        return 'Too many dice.'
+        self.say(room, 'Too many dice.')
       elsif range > 99
-        return "Range can't be over 99."
+        self.say(room, "Range can't be over 99.")
       end
       rolls  =  []
       dice.times do
         rolls << Random.rand(1..range.to_i)
       end
-      return "#{dice} #{range}-sided Dice: #{rolls.join(', ')}.
-              Total : #{rolls.inject(:+)}"
+      self.say(room, "#{dice} #{range}-sided Dice: #{rolls.join(', ')}.
+              Total : #{rolls.inject(:+)}")
     else
-      return "1 #{target}-sided Die: #{Random.rand(1..target.to_i)}"
+      self.say(room, "1 #{args}-sided Die: #{Random.rand(1..args.to_i)}")
     end
   end
 end
 
-def whois(target, user)
+def whois(args, room, user)
   return '' unless user.can('whois')
-  return '' if target.nil?
+  return '' if args.nil?
   adj  =  File.readlines('data/adjectives.txt').sample.strip
   noun  =  File.readlines('data/nouns.txt').sample.strip
-  "#{target} is a(n) #{adj} #{noun}."
+  self.say(room, "#{args} is a(n) #{adj} #{noun}.")
 end
 
-def ship(target, user)
+def ship(args, room, user)
   return '' unless user.can('ship')
-  users = target.gsub(' ','').split(',').map(&:downcase)
-  "#{users[0]} and #{users[1]}'s relationship is #{Random.rand(1..100)}% strong."
+  users = args.gsub(' ','').split(',').map(&:downcase)
+  self.say(room, "#{users[0]} and #{users[1]}'s relationship is #{Random.rand(1..100)}% strong.")
 end
 
-def sudo(target, user)
+def sudo(args, room, user)
   return '' unless user.can('sudo')
-  return "#{eval(target)}"
+  self.say(room, "#{eval(args)}")
 end
 
-def rank(target, user)
+def rank(args, room, user)
   return '' unless user.can('rank')
-  command_rank  =  RANKS[target] || 'unranked'
-  "The rank for #{target} is: #{command_rank}"
+  command_rank  =  RANKS[args] || 'unranked'
+  self.say(room, "The rank for #{args} is: #{command_rank}")
 end
 
-#def google(target, user)
+#def google(args, user)
 # return '' unless user.can('google')
-#  url  =  "http://www.google.com/search?q=#{CGI.escape(target)}"
+#  url  =  "http://www.google.com/search?q=#{CGI.escape(args)}"
 #  data  =  Nokogiri::HTML(open(url)).at('h3.r')
 #  data_string = data.at('./following::div').children.first.text
 #  data_string.gsub!(/(CachedSimilar|Cached)/, '')
@@ -90,12 +98,12 @@ end
 #  "#{text} | #{data_string}"
 #end
 
-def salt(target, user)
+def salt(args, user)
   return '' unless user.can('salt')
-  "#{target} is #{(Random.rand(0.0..100.0)).round(2)}% salty."
+  "#{args} is #{(Random.rand(0.0..100.0)).round(2)}% salty."
 end
 
-def reload(_, user)
+def reload(_, _, user)
   return '' unless user.can('reload')
   begin
     load './commands.rb'
@@ -106,76 +114,71 @@ def reload(_, user)
   end
 end
 
-def restart(_, user)
-  return '' unless user.can('reload')
-  load './parser.rb'
-end
-
-def fight(target, user)
+def fight(args, user)
   return '' unless user.can('fight')
-  target  =  target.split(',')
-  if target.length > 2
+  args  =  args.split(',')
+  if args.length > 2
     nums = []
-    (target.length.to_i - 1).times.reduce([]) do |a|
+    (args.length.to_i - 1).times.reduce([]) do |a|
       max  =  100 - a.inject(:+).to_i
       nums << Random.rand(0..max)
     end
     nums << 100 - nums.inject(:+)
-    message = "If #{target.englishize} were to fight, #{target.sample} would have the best chance of winning with #{nums.max}%."
+    message = "If #{args.englishize} were to fight, #{args.sample} would have the best chance of winning with #{nums.max}%."
   else
-    message = "If #{target[0]} and #{target[1]} were to fight, #{target.sample} would have a #{Random.rand(0..100)}% chance of winning."
+    message = "If #{args[0]} and #{args[1]} were to fight, #{args.sample} would have a #{Random.rand(0..100)}% chance of winning."
   end
   message
 end
 
 
-def set(target, user)
+def set(args, room, user)
   return '' unless user.can('set')
-  target = target.gsub(/ /, '').split(',')
-  command = target[0]
-  rank = target[1]
+  args = args.gsub(/ /, '').split(',')
+  command = args[0]
+  rank = args[1]
   RANKS[command]  =  rank
   File.open('ranks.json ', 'w') { |b| b.write(RANKS.to_json) }
   "The command #{command} is now set to #{rank}."
 end
 
-def about(_, _)
-  "**BlizzyBot** : made by BlizzardQ. Made with Ruby #{RUBY_VERSION}."
+def about(_,room, _)
+  self.say(room, "**BlizzyBot** : made by BlizzardQ. Made with Ruby #{RUBY_VERSION}.")
 end
 
-def helix(_, user)
+def helix(_, room, user)
   return '' unless user.can('set')
   File.readlines('data/helix.txt').sample
 end
 
-def pick(target,room, user)
+def pick(args,room, user)
   return '' unless user.can('pick')
-  randompick = target.split(',').sample
+  randompick = args.split(',').sample
   self.class.say(room,"Hmm, I randomly picked #{randompick}.")
 end
 
-def urban(target, user)
+def urban(args, room, user)
   return '' unless user.can('urban')
-  target = target.split(' ').join('+') if target.include? ' '
-  url = "http://api.urbandictionary.com/v0/define?term=#{target}"
-  url = 'http://api.urbandictionary.com/v0/random' if target.nil?
+  args = args.split(' ').join('+') if args.include? ' '
+  url = "http://api.urbandictionary.com/v0/define?term=#{args}"
+  url = 'http://api.urbandictionary.com/v0/random' if args.nil?
   urban = JSON.parse(RestClient.get url)
   puts '.lol.'
   "#{urban['list'][0]['word']}: #{urban['list'][0]['definition'].gsub(/[\[\]\n]/, '')}"
 end
 
-def echo(target, user)
+def echo(args, room, user)
   return '' unless user.can('echo')
-  target
+  args
 end
 
-def define(target, user)
+def define(args, room, user)
   return '' unless user.can('define')
   begin
-    dictionary = Nokogiri::HTML(open("http://www.dictionary.reference.com/browse/#{target.downcase}"))
-    return "#{target}: #{dictionary.css('.def-content')[0].content.strip}"
+    dictionary = Nokogiri::HTML(open("http://www.dictionary.reference.com/browse/#{args.downcase}"))
+    return "#{args}: #{dictionary.css('.def-content')[0].content.strip}"
   rescue
-    return "#{target} is not a word."
+    return "#{args} is not a word."
   end
 end
 

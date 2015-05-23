@@ -2,7 +2,7 @@ require './commands'
 
 require 'faye/websocket'
 require 'cleverbot-api'
-require 'rest_client'
+require 'rest-client'
 require 'nokogiri'
 require 'open-uri'
 require 'json'
