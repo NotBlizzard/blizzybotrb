@@ -1,7 +1,7 @@
-user: 'travisbottt'
+user: 'travisbotttt'
 pass:
 rooms: []
-server: 198.27.117.206:8000
+server: sim.smogon.com:8000
 owner: blizzardq
-log: false
+log: true
 symbol: $
