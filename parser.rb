@@ -73,7 +73,7 @@ class ShowdownBot
             end
           end
 
-          if m[4].downcase.include? @user.downcase and user[1..-1].downcase != @user.downcase
+          if m[4].downcase.include? @user.downcase and user[1..-1].downcase != @user.downcase && $talk == true
             response = $cleverbot.think m[4].gsub(/#{@user}/, '').downcase!
             @ws.send("#{room}|#{user[1..-1]}, #{response}")
           end

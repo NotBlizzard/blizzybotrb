@@ -17,8 +17,15 @@ GEM
     ffi (1.9.8-x64-mingw32)
     http-cookie (1.0.2)
       domain_name (~> 0.5)
-    mime-types (2.5)
+    httparty (0.13.5)
+      json (~> 1.8)
+      multi_xml (>= 0.5.2)
+    hyoka (0.0.5)
+      httparty
+    json (1.8.3)
+    mime-types (2.6.1)
     mini_portile (0.6.2)
+    multi_xml (0.5.5)
     netrc (0.10.3)
     nokogiri (1.6.6.2-x64-mingw32)
       mini_portile (~> 0.6.0)
@@ -41,5 +48,6 @@ DEPENDENCIES
   cleverbot-api!
   eventmachine
   faye-websocket
+  hyoka
   nokogiri
   rest-client

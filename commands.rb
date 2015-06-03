@@ -2,11 +2,15 @@ require 'rest_client'
 require 'nokogiri'
 require 'open-uri'
 require 'rubygems'
+require 'hyoka'
 
 require 'cgi'
 
 require './parser.rb'
 require './helpers.rb'
+
+$talk = true
+$threads = []
 
 unless File.exist?('ranks.json')
   File.open('ranks.json', 'w') { |f| f.write('{}') }
@@ -19,6 +23,25 @@ end
 def slap(args, room, user)
   return '' unless user.can('slap')
   self.say(room, "/me slaps #{args} with a fish.")
+end
+
+def remind(args, room, user)
+  Thread.new {
+    sleep(args)
+    #self.say(room, "Hello")
+    puts "OK"
+  }.join
+end
+
+def talk(args, room, user)
+  return '' unless user.can('sudo')
+  if args == 'on'
+    $talk = true
+    self.say(room, "Talking is now on")
+  else
+    $talk = false
+    self.say(room, "Talking is now off")
+  end
 end
 
 def flip(arg, room, _)
@@ -67,23 +90,21 @@ def dice(args=nil, room, user)
   end
 end
 
-def whois(args, room, user)
-  return '' unless user.can('whois')
-  return '' if args.nil?
-  adj  =  File.readlines('data/adjectives.txt').sample.strip
-  noun  =  File.readlines('data/nouns.txt').sample.strip
-  self.say(room, "#{args} is a(n) #{adj} #{noun}.")
-end
-
-def ship(args, room, user)
-  return '' unless user.can('ship')
-  users = args.gsub(' ','').split(',').map(&:downcase)
-  self.say(room, "#{users[0]} and #{users[1]}'s relationship is #{Random.rand(1..100)}% strong.")
-end
 
 def sudo(args, room, user)
-  return '' unless user.can('sudo')
-  self.say(room, "#{eval(args)}")
+  data = args.split(', ')[0]
+  language = args.split(', ')[1]
+  h = Hyoka.new
+  case language
+  when 'py'
+    self.say(room, "#{h.eval data, 'python/cpython-2.7.8'}")
+  when 'rb'
+    self.say(room, "#{h.eval data, 'ruby/mri-2.1'}")
+  when 'js'
+    self.say(room, "#{h.eval data, 'javascript/node-0.10.29'}")
+  when 'php'
+    self.say(room, "#{h.eval data, 'php/php-5.5.14'}")
+  end
 end
 
 def rank(args, room, user)
@@ -142,8 +163,8 @@ def set(args, room, user)
   command = args[0]
   rank = args[1]
   RANKS[command]  =  rank
-  File.open('ranks.json ', 'w') { |b| b.write(RANKS.to_json) }
-  this.say(room, "The command #{command} is now set to #{rank}.")
+  File.open('ranks.json', 'w') { |b| b.write(RANKS.to_json) }
+  self.say(room, "The command #{command} is now set to #{rank}.")
 end
 
 def about(_,room, _)
