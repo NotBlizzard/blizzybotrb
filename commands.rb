@@ -11,18 +11,27 @@ require './helpers.rb'
 
 $talk = true
 $threads = []
+$ladder = false
 
 unless File.exist?('ranks.json')
   File.open('ranks.json', 'w') { |f| f.write('{}') }
 end
 
-# def foo(args, room, user)
-#   self.say(room, "Hello")
-# end
-
 def slap(args, room, user)
   return '' unless user.can('slap')
   self.say(room, "/me slaps #{args} with a fish.")
+end
+
+def l(args, room, user)
+  return '' unless user.can('ladder')
+  if ($ladder)
+    $ladder = false
+    self.say(room, "Laddering is now off.")
+  else
+    $ladder = true
+    @ws.send("#{room}|/search challengecup1v1")
+    self.say(room, "I am now laddering.")
+  end
 end
 
 def remind(args, room, user)
@@ -35,7 +44,7 @@ end
 
 def talk(args, room, user)
   return '' unless user.can('sudo')
-  if args == 'on'
+  unless ($talk)
     $talk = true
     self.say(room, "Talking is now on")
   else
@@ -90,6 +99,10 @@ def dice(args=nil, room, user)
   end
 end
 
+def rb(args, room, user)
+  return '' unless user.can('eval')
+  self.say(room, "#{eval(args)}")
+end
 
 def sudo(args, room, user)
   data = args.split(', ')[0]
@@ -97,13 +110,13 @@ def sudo(args, room, user)
   h = Hyoka.new
   case language
   when 'py'
-    self.say(room, "#{h.eval data, 'python/cpython-2.7.8'}")
+    self.say(room, "> #{h.eval data, 'python/cpython-2.7.8'}")
   when 'rb'
-    self.say(room, "#{h.eval data, 'ruby/mri-2.1'}")
+    self.say(room, "> #{h.eval data, 'ruby/mri-2.1'}")
   when 'js'
-    self.say(room, "#{h.eval data, 'javascript/node-0.10.29'}")
+    self.say(room, "> #{h.eval data, 'javascript/node-0.10.29'}")
   when 'php'
-    self.say(room, "#{h.eval data, 'php/php-5.5.14'}")
+    self.say(room, "> #{h.eval data, 'php/php-5.5.14'}")
   end
 end
 
@@ -129,10 +142,11 @@ def salt(args, user)
 end
 
 def reload(_, room, user)
-  #return '' unless user.can('reload')
+  return '' unless user.can('reload')
   begin
     load './commands.rb'
     load './helpers.rb'
+    load './parser.rb'
     self.say(room, 'Commands reloaded.')
   rescue
     self.say(room, 'Error.')
@@ -162,7 +176,10 @@ def set(args, room, user)
   args = args.gsub(/ /, '').split(',')
   command = args[0]
   rank = args[1]
-  RANKS[command]  =  rank
+  if rank == 'u'
+    rank = ' '
+  end
+  RANKS[command] = rank
   File.open('ranks.json', 'w') { |b| b.write(RANKS.to_json) }
   self.say(room, "The command #{command} is now set to #{rank}.")
 end
@@ -193,6 +210,9 @@ def urban(args, room, user)
 end
 
 def echo(args, room, user)
+  if user.downcase.include? "terlor"
+    return "no"
+  end
   return '' unless user.can('echo')
   args
 end

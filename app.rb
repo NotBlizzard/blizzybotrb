@@ -14,7 +14,7 @@ rescue
 end
 
 EventMachine.run do
-  ShowdownBot.new(
+  bot = ShowdownBot.new(
     options['user'],
     options['pass'],
     options['rooms'],

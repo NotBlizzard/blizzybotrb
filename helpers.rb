@@ -24,7 +24,7 @@ class String
   end
 
   def can(cmd)
-    return true if self =~ /\W\s*#{$owner}/i
+    return true if self =~ /(?<=^.)(.*)/i
     groups = {
         'u' => 0,
         '+' => 1,
