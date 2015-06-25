@@ -1,5 +1,4 @@
 require 'rest_client'
-require 'nokogiri'
 require 'open-uri'
 require 'rubygems'
 require 'hyoka'
@@ -8,10 +7,6 @@ require 'cgi'
 
 require './parser.rb'
 require './helpers.rb'
-
-$talk = true
-$threads = []
-$ladder = false
 
 unless File.exist?('ranks.json')
   File.open('ranks.json', 'w') { |f| f.write('{}') }
@@ -99,9 +94,13 @@ def dice(args=nil, room, user)
   end
 end
 
-def rb(args, room, user)
-  return '' unless user.can('eval')
+def irb(args, room, user)
+  #return '' unless user.can('eval')
   self.say(room, "#{eval(args)}")
+end
+
+def a(a, r, u)
+  self.say(room, "#{eval(a)}")
 end
 
 def sudo(args, room, user)
@@ -141,13 +140,25 @@ def salt(args, user)
   "#{args} is #{(Random.rand(0.0..100.0)).round(2)}% salty."
 end
 
-def reload(_, room, user)
+def hotpatch(args, room, user)
   return '' unless user.can('reload')
   begin
-    load './commands.rb'
-    load './helpers.rb'
-    load './parser.rb'
-    self.say(room, 'Commands reloaded.')
+    case args
+    when 'commands'
+      load './commands.rb'
+      self.say(room, "#{args} reloaded.")
+    when 'helpers'
+      load './helpers.rb'
+      self.say(room, "#{args} reloaded.")
+    when 'battles'
+      load './battle.rb'
+      self.say(room, "#{args} reloaded.")
+    when 'parser'
+      load './parser.rb'
+      self.say(room, "#{args} reloaded.")
+    else
+      self.say(room, "#{args} is not recognized as a hotpatch.")
+    end
   rescue
     self.say(room, 'Error.')
   end
@@ -217,13 +228,13 @@ def echo(args, room, user)
   args
 end
 
-def define(args, room, user)
-  return '' unless user.can('define')
-  begin
-    dictionary = Nokogiri::HTML(open("http://www.dictionary.reference.com/browse/#{args.downcase}"))
-    return "#{args}: #{dictionary.css('.def-content')[0].content.strip}"
-  rescue
-    return "#{args} is not a word."
-  end
-end
+#def define(args, room, user)
+#  return '' unless user.can('define')
+#  begin
+#    dictionary = Nokogiri::HTML(open("http://www.dictionary.reference.com/browse/#{args.downcase}"))
+#    return "#{args}: #{dictionary.css('.def-content')[0].content.strip}"
+#  rescue
+ #   return "#{args} is not a word."
+ # end
+#end
 

@@ -12,7 +12,6 @@ rescue
         in /config and add your credentials."
   exit!
 end
-
 EventMachine.run do
   bot = ShowdownBot.new(
     options['user'],

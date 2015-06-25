@@ -24,7 +24,7 @@ class String
   end
 
   def can(cmd)
-    return true if self =~ /(?<=^.)(.*)/i
+    return true if self =~ /(?<=^.)#{$owner}/i
     groups = {
         'u' => 0,
         '+' => 1,
@@ -36,9 +36,7 @@ class String
         'off' => 6
     }
     r = self[0]
-    if not groups.keys.include? r
-      r = 'u'
-    end
+    r = 'u' if r == ' '
     return groups[r] >= groups[$ranks[cmd]]
 
   end
