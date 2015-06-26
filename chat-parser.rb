@@ -50,7 +50,7 @@ class ShowdownBot
         battleroom = @room[/\d+/]
 
         if $battles.keys.include? battleroom
-          $battles[battleroom.to_s].parse(@ws, m, @room)
+          $battles[battleroom.to_s].run(@ws, m, @room)
         end
 
         case message[1]

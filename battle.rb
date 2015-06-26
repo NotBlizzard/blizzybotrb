@@ -20,37 +20,37 @@ class Battle
   end
 
   def run(ws, data, room)
-    handler = BattleHandler.new(@ws, @bot, @opponent, data)
+    handler = BattleParser.new(@ws, @bot, @opponent, data)
     @player_one = @challenged
 
     message = data.split('|')
     case message[1].downcase
     when 'request'
-      @moves = BattleHandler.get_moves if message[2].split(':')[0].include? "active"
+      @moves = BattleParser.get_moves if message[2].split(':')[0].include? "active"
       unless @have_team
-        @team = BattleHandler.get_team(message[2])
+        @team = BattleParser.get_team(message[2])
         @have_team = true
       end
-      BattleHandler.request(@bot, @team, @have_team, room, @tier)
+      BattleParser.request(@bot, @team, @have_team, room, @tier)
 
     when 'win','lose','tie'
-      BattleHandler.win_lose_tie(room)
+      BattleParser.win_lose_tie(room)
 
     when 'faint'
-      BattleHandler.faint(room, @team)
+      BattleParser.faint(room, @team)
 
     when 'player'
-      BattleHandler.player(@bot, @opponent, data, @player_one, ws, @moves)
+      BattleParser.player(@bot, @opponent, data, @player_one, ws, @moves)
 
     when '-damage'
-      BattleHandler.damage
+      BattleParser.damage
 
     when 'turn'
       move = BattleHelpers.decide(@moves, @bot, @opponent)
-      BattleHandler.mega_or_not(@team, @bot, ws)
+      BattleParser.mega_or_not(@team, @bot, ws)
 
     when 'switch'
-      BattleHandler.switch_helper(@tier, @bot, @opponent, message, @player_one, @team)
+      BattleParser.switch_helper(@tier, @bot, @opponent, message, @player_one, @team)
     end
   end
 end
