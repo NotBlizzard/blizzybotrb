@@ -1,6 +1,5 @@
 BlizzyBot
 =============
-Note: This is a personal project, so all git requests will be ignored. 
 
 Fork if you wish, as long as you give credit.
 
