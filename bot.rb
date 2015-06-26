@@ -38,7 +38,6 @@ class ShowdownBot
 
   def run
     @ws = Faye::WebSocket::Client.new("ws://#{@server}/showdown/websocket")
-
     @ws.on :message do |event|
       event.data.split("\n").each do |m|
         if m[0] and m[0][0] == '>'
@@ -51,7 +50,7 @@ class ShowdownBot
         battleroom = @room[/\d+/]
 
         if $battles.keys.include? battleroom
-          $battles[battleroom.to_s].run(@ws, m, @room)
+          $battles[battleroom.to_s].parse(@ws, m, @room)
         end
 
         case message[1]

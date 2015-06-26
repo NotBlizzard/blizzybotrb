@@ -2,6 +2,7 @@ require 'json'
 require 'byebug'
 require './helpers.rb'
 require './battle-helpers.rb'
+require './battle-parser.rb'
 
 
 class Battle
@@ -19,38 +20,37 @@ class Battle
   end
 
   def run(ws, data, room)
+    handler = BattleHandler.new(@ws, @bot, @opponent, data)
     @player_one = @challenged
 
     message = data.split('|')
-    case message[1]
+    case message[1].downcase
     when 'request'
-      @moves = get_moves(message[2]) if message[2].split(':')[0].include? "active"
+      @moves = BattleHandler.get_moves if message[2].split(':')[0].include? "active"
       unless @have_team
-        @team  << get_team_helper(message[2], @have_team).flatten.freeze
-        @team.freeze
-      byebug
+        @team = BattleHandler.get_team(message[2])
         @have_team = true
       end
-      request_helper(ws, data, @bot, @team, @have_team, room, @tier)
+      BattleHandler.request(@bot, @team, @have_team, room, @tier)
+
     when 'win','lose','tie'
-      win_lose_tie_helper
+      BattleHandler.win_lose_tie(room)
 
     when 'faint'
-      faint_helper(message[2], @bot, @team, room, @player_one, @opponent, ws)
+      BattleHandler.faint(room, @team)
 
     when 'player'
-      player_helper(@bot, @opponent, data, @player_one, ws)
+      BattleHandler.player(@bot, @opponent, data, @player_one, ws, @moves)
 
     when '-damage'
-      damage_helper(message[2], message[3], @player_one, @bot, @opponent)
+      BattleHandler.damage
 
     when 'turn'
-      move = decide(@moves, @bot, @opponent)
-      mega_or_not(@tier, @team, @bot, ws)
+      move = BattleHelpers.decide(@moves, @bot, @opponent)
+      BattleHandler.mega_or_not(@team, @bot, ws)
 
     when 'switch'
-      byebug
-      switch_helper(@tier, @bot, @opponent, message, @player_one, @team)
+      BattleHandler.switch_helper(@tier, @bot, @opponent, message, @player_one, @team)
     end
   end
 end

@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'bundler/setup'
 
-require './parser.rb'
+require './bot.rb'
 require 'eventmachine'
 require 'yaml'
 
