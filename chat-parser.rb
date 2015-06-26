@@ -1,7 +1,7 @@
 # Ye be warned: here be dragons.
 require './commands'
 require './battle'
-require './parser-helpers'
+require './chat-helpers'
 
 require 'faye/websocket'
 require 'cleverbot-api'

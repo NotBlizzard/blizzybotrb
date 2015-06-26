@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'bundler/setup'
 
-require './bot.rb'
+require './chat-parser.rb'
 require 'eventmachine'
 require 'yaml'
 

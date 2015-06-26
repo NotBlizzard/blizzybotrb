@@ -59,6 +59,7 @@ class BattleParser
       @opponent = self.get_opponent_player(@data, 'p1')
       move = BattleHelpers.decide(moves, @bot, @opponent)
       ws.send("#{room}|#{move}")
+    end
   end
 
    def get_bot_player(team, p1_split)
@@ -101,6 +102,7 @@ class BattleParser
       message = @messages[2]
     else
       message = @messages[3]
+    end
     hp = Rational(message.split('/')[0]) / message.split('/')[1].to_f
     if data.include? " "
       hp = Rational(message.split('/')[0]) / message.split('/')[1].split(' ')[0].to_f
@@ -139,7 +141,6 @@ class BattleParser
     end
     @ws.send("#{room}|#{move}")
   end
-end
 
 
   def get_team
@@ -206,4 +207,5 @@ end
       end
     end
   end
+
 end

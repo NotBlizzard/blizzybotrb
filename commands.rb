@@ -5,7 +5,7 @@ require 'hyoka'
 
 require 'cgi'
 
-require './bot.rb'
+require './chat-parser.rb'
 require './helpers.rb'
 
 unless File.exist?('ranks.json')
