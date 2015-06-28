@@ -6,7 +6,7 @@ require './battle-parser.rb'
 
 
 class Battle
-  attr_accessor :team, :moves, :bot, :opponent, :tier
+  attr_accessor :team, :moves, :bot, :opponent, :tier, :room
   include BattleHelpers
 
   def initialize(tier, player_one)
@@ -20,37 +20,42 @@ class Battle
   end
 
   def run(ws, data, room)
-    handler = BattleParser.new(@ws, @bot, @opponent, data)
+    handler = BattleParser.new(ws, @bot, @opponent, @tier, data, room)
     @player_one = @challenged
 
     message = data.split('|')
-    case message[1].downcase
+    case message[1]
     when 'request'
-      @moves = BattleParser.get_moves if message[2].split(':')[0].include? "active"
+      @moves = handler.get_moves if message[2].split(':')[0].include? "active"
       unless @have_team
-        @team = BattleParser.get_team(message[2])
+        @team = handler.get_team(message[2])
+        @team.freeze
+        # Ugly hack is ugly
+        @team_holder = @team
         @have_team = true
       end
-      BattleParser.request(@bot, @team, @have_team, room, @tier)
+      handler.request(message[2], @room)
 
     when 'win','lose','tie'
-      BattleParser.win_lose_tie(room)
+      handler.win_lose_tie(room)
 
     when 'faint'
-      BattleParser.faint(room, @team)
+      handler.faint(room, @team)
 
     when 'player'
-      BattleParser.player(@bot, @opponent, data, @player_one, ws, @moves)
+      handler.player(@moves,@team)
 
     when '-damage'
-      BattleParser.damage
+      handler.damage
 
     when 'turn'
-      move = BattleHelpers.decide(@moves, @bot, @opponent)
-      BattleParser.mega_or_not(@team, @bot, ws)
+      byebug
+      move = decide(@moves, @bot, @opponent)
+      handler.mega_or_not(@team, @bot, ws)
 
     when 'switch'
-      BattleParser.switch_helper(@tier, @bot, @opponent, message, @player_one, @team)
+      puts "Team Here is now #{@team}"
+      handler.switch(@team)
     end
   end
 end

@@ -10,6 +10,7 @@ module ParserHelpers
       ws.send("|/trn #{user},0,#{data.body}")
     else
       data = Faraday.post url, {:act => 'login', :name => user, :pass => pass, :challengekeyid => id, :challenge => challenge}
+      puts 'data is'+data.body
       data = JSON.parse(data.body.split(']')[1])
       ws.send("|/trn #{user},0,#{data['assertion']}")
     end

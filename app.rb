@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'bundler/setup'
 
-require './chat-parser.rb'
+require './bot.rb'
 require 'eventmachine'
 require 'yaml'
 
@@ -13,7 +13,7 @@ rescue
   exit!
 end
 EventMachine.run do
-  bot = ShowdownBot.new(
+  bot = Bot.new(
     options['user'],
     options['pass'],
     options['rooms'],
@@ -21,5 +21,5 @@ EventMachine.run do
     options['owner'],
     options['symbol'],
     options['log']
-  ).run
+  ).go
 end

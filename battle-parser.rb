@@ -1,10 +1,22 @@
+
+MOVES               = JSON.parse(Faraday.get("https://gist.githubusercontent.com/NotBlizzard/bbebc81b2bae1f506514/raw/7de50703899d08c598e776623bdfebadd9f42ba8/moves.json").body)
+WEAKNESSES          = JSON.parse(Faraday.get("https://gist.githubusercontent.com/NotBlizzard/f2e72ad079b6a211c2b0/raw/a734064c23cea6027f9c720afdc6376c8e6ee9e5/weaknesses.json").body)
+POKEDEX             = JSON.parse(Faraday.get("https://gist.githubusercontent.com/NotBlizzard/a84ad1737c801f748b01/raw/69dc8756a924aa846a4673c591ebf37a0fc60980/pokedex.json").body)
+SUPER_EFFECTIVENESS = JSON.parse(Faraday.get("https://gist.githubusercontent.com/NotBlizzard/dede16ec50b4d4693b2d/raw/1e117b0ffb98ba0fa47d6b5f0da9d52a537266ae/supereffectiveness.json").body)
+RESISTANCES         = JSON.parse(Faraday.get("https://gist.githubusercontent.com/NotBlizzard/cc46e43ac6df8e87e1f9/raw/84e8164a2a92bed7ca81fc7df503209975a1fef6/resistances.json").body)
+IMMUNITIES          = JSON.parse(Faraday.get("https://gist.githubusercontent.com/NotBlizzard/ae9017358a93d49ad25f/raw/64a3961aaa8b0697c815b340eec164eec7e0e4e2/immunities.json").body)
+
+
 class BattleParser
   attr_accessor :ws, :bot, :opponent, :team, :data
 
-  def intialize(ws, bot, opponent, tier, data)
+  def initialize(ws, bot, opponent, tier, data, room)
     @ws = ws
     @tier = tier
     @data = data
+    @room = room
+    @bot = bot
+    @opponent = opponent
     @megaed = false
     @messages = data.split('|')
     @player_one = true
@@ -28,37 +40,42 @@ class BattleParser
     end
   end
 
-  def switch
+  def switch(team)
     if @player_one
       if @messages[2].include? 'p1a'
-        unless tier == 'cc1v1'
-          @bot = get_bot_switch(@messages[3], team)
+        unless @tier == 'cc1v1'
+          @bot = get_bot_switch(team)
         end
       else
-       @opponent = self.get_opponent_switch(@messages[3])
+       @opponent = self.get_opponent_switch
       end
     else
       if @messages[2].include? 'p2a'
-        unless tier == 'cc1v1'
-          @bot = self.get_bot_switch(@messages[3], team)
+        unless @tier == 'cc1v1'
+          @bot = self.get_bot_switch(team)
         end
       else
-       @opponent = self.get_opponent_switch(@messages[3])
+       @opponent = self.get_opponent_switch
       end
     end
+    byebug
   end
 
   def player(moves, team)
-    if @player_one and @data.include? "p2a: "
-      @bot = self.get_bot_player(team, 'p1')
-      @opponent = self.get_opponent_player(@data, 'p2')
-      move = BattleHelpers.decide(moves, @bot, @opponent)
-      ws.send("#{room}|#{move}")
+    if @player_one
+      if @data.include? "p2a: "
+        @bot = self.get_bot_player(team, 'p1')
+        @opponent = self.get_opponent_player(@data, 'p2')
+        move = BattleHelpers.decide(moves, @bot, @opponent)
+        ws.send("#{room}|#{move}")
+      end
     else
-      @bot = self.get_bot_player(team, 'p2')
-      @opponent = self.get_opponent_player(@data, 'p1')
-      move = BattleHelpers.decide(moves, @bot, @opponent)
-      ws.send("#{room}|#{move}")
+      if @data.include? 'p2a: '
+        @bot = self.get_bot_player(team, 'p2')
+        @opponent = self.get_opponent_player(@data, 'p1')
+        move = BattleHelpers.decide(moves, @bot, @opponent)
+        ws.send("#{room}|#{move}")
+      end
     end
   end
 
@@ -79,18 +96,18 @@ class BattleParser
     return opponent
   end
 
-  def get_bot_switch(data, team)
+  def get_bot_switch(team)
     you = {}
-    you[:name] = @data.split(',')[0].downcase.gsub(/[^A-z0-9]/,'')
+    you[:name] = @messages[3].split(',')[0].downcase.gsub(/[^A-z0-9]/,'')
     you[:type] = POKEDEX[you[:name]]['types'].map(&:downcase)
     you[:item] = team.find{|x| x[:name] == you[:name]}[:item]
-    you[:speed] = POKEDEX[you[:name]]['basestats']['spe']
+    you[:speed] = POKEDEX[you[:name]]['baseStats']['spe']
     return you
   end
 
-  def get_opponent_switch(data)
-    @opponent = {}
-    opponent[:name] = data.split(',')[0].downcase.gsub(/[^A-z0-9]/,'')
+  def get_opponent_switch
+    opponent = {}
+    opponent[:name] = @messages[3].split(',')[0].downcase
     opponent[:type] = POKEDEX[opponent[:name]]['types']
     opponent[:speed] = POKEDEX[opponent[:name]]['baseStats']['spe']
     return opponent
@@ -123,7 +140,7 @@ class BattleParser
 
   def mega_or_not(team, moves)
     move = BattleHandler.decide(moves, @bot, @opponent)
-    unless @tier == 'cc1v1'
+    unless @@tier == 'cc1v1'
       if team.find{|x| x[:name].downcase == @bot[:name]}[:mega] == true
         if @megaed == false
           @ws.send("#{room}|#{move} mega")
@@ -143,27 +160,27 @@ class BattleParser
   end
 
 
-  def get_team
+  def get_team(message)
     team = []
-    data = JSON.parse(@messages[2])
-      for x in 0..5 do
-        team << {
-          :nick     => data['side']['pokemon'][x]['ident'].split(': ')[1].downcase,
-          :name     => data['side']['pokemon'][x]['details'].split(',')[0].gsub(/[^A-z0-9]/,'').downcase,
-          :moves    => data['side']['pokemon'][x]['moves'].to_a.map(&:downcase),
-          :item     => data['side']['pokemon'][x]['item'].downcase,
-          :ability  => data['side']['pokemon'][x]['baseAbility'].downcase,
-          :mega     => data['side']['pokemon'][x]['canMegaEvo'],
-          :speed    => data['side']['pokemon'][x]['stats']['spe'],
-          :fainted  => false,
-          # For some reason we have to do this the hard way.
-          :type     => POKEDEX[data['side']['pokemon'][x]['details'].split(',')[0].downcase.gsub(/[^A-z0-9]/,'')]['types'].map(&:downcase)
-        }
-      end
+    data = JSON.parse(message)
+    data['side']['pokemon'].each do |pkmn|
+      team << {
+        :nick    => pkmn['ident'].split(': ')[1].downcase,
+        :name    => pkmn['details'].split(',')[0].gsub(/[^A-z0-9]/, '').downcase,
+        :moves   => pkmn['moves'].to_a.map(&:downcase),
+        :item    => pkmn['item'].downcase,
+        :ability => pkmn['baseAbility'].downcase,
+        :mega    => pkmn['canMegaEvo'],
+        :speed   => pkmn['stats']['spe'],
+        :type    => POKEDEX[pkmn['details'].split(',')[0].gsub(/[^A-z0-9]/,'').downcase]['types'].map(&:downcase),
+        :fainted => false
+      }
+    end
+    puts "team in method is now #{team}"
     team
   end
 
-  def moves_helper
+  def get_moves
     data = JSON.parse(@messages[2])
     moves = []
     data['active'][0]['moves'].each_with_index do |_, i|
@@ -178,15 +195,11 @@ class BattleParser
   end
 
 
-  def request
+  def request(message, room)
     @ws.send("#{room}|good luck have fun.")
-    @ws.send("#{room}|/team #{rand(1...7)}")if tier == 'cc1v1' or tier == 'ou'
-    if @messages[2].include? 'side'
-      if have_team == false
-        have_team = true
-      else
-        @bot = get_bot_request(m[2])
-      end
+    @ws.send("#{room}|/team #{rand(1...7)}")if @tier == 'cc1v1' or @tier == 'ou'
+    unless message.include? 'side'
+      @bot = get_bot_request(message)
     end
   end
 
@@ -207,5 +220,4 @@ class BattleParser
       end
     end
   end
-
 end

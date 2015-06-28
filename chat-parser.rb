@@ -10,15 +10,15 @@ require 'open-uri'
 require 'faraday'
 require 'json'
 
-TEAM = Faraday.get("http://plk.link/W0KHM7").body
+TEAM = Faraday.get("https://gist.githubusercontent.com/NotBlizzard/e5e367d41e6894a8edd3/raw/0ffdcee8911d0e11c0cff9ba3c234cb93c8a29f6/team").body
 
-class ShowdownBot
+class ChatParser
   include ParserHelpers
   attr_accessor :ws,:room
   @cleverbot = CleverBot.new
   # Most complex hash ever.
   # Yes, I know this is a Global Variable. I use it for testing the bot while it is running.
-  $battles = Hash.new {|h, k| h[k] = Hash.new {|h,k| h[k] = Hash.new}}
+
   def initialize(user, pass = '', rooms, server, owner, symbol, log)
     @room = ""
     @battles = Array.new
@@ -77,7 +77,7 @@ class ShowdownBot
 
         when 'player'
           battleroom = @room[/\d+/]
-          unless $battles.keys.include? @room
+          unless $battles.keys.include? battleroom
             $battles[battleroom.to_s] = Battle.new(@tier, true)
           end
 
