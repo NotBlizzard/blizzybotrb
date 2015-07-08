@@ -22,8 +22,6 @@ class Battle
 
   def run(ws, data, room)
     handler = BattleParser.new(ws, @bot, @opponent, @tier, data, room, @player_one)
-
-
     message = data.split('|')
     case message[1]
     when 'request'
@@ -33,7 +31,6 @@ class Battle
       end
       @pick = rand(1...7)
       @pick = 1 if @tier == 'randombattle'
-
       handler.request(message[2], room, @pick, @moves, @team)
 
     when 'win','lose','tie'
@@ -65,6 +62,9 @@ class Battle
       move = decide(@moves, @bot, @opponent, @tier, @team)
       ws.send("#{room}|#{move}")
       puts "move is #{move}"
+
+    when 'drag'
+      @bot = handler.get_bot_switch_values(@team)
 
     when 'switch'
       if @player_one

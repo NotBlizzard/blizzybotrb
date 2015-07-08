@@ -189,8 +189,8 @@ class BattleParser
     if message.include? 'forceSwitch'
       forced_pkmn = JSON.parse(message)['side']['pokemon'][0]['details'].split(',')[0]
       temp_team = team
-      temp_team.delete_if? {|x| x[:name] == forced_pkmn.downcase}
-      move = decide(moves, @bot, @opponent, @tier, team)
+      temp_team.delete_if {|x| x[:name] == forced_pkmn.downcase}
+      move = decide(moves, @bot, @opponent, @tier, temp_team)
     end
   end
 

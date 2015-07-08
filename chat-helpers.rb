@@ -33,10 +33,12 @@ module ChatHelpers
   def send_command(message, room, user, symbol, ws)
     if message[4].include? " "
       cmd = message[4].split(symbol)[1].split(' ')[0]
-      if Commands.instance_methods(false).include? cmd.downcase.to_sym
-        arguments = message[4].split("#{cmd} ")[1] || ""
-        ws.send("#{room}|#{self.send cmd, arguments, room, user}")
-      end
+    else
+      cmd = message[4].split(symbol)[1]
+    end
+    if Commands.instance_methods(false).include? cmd.downcase.to_sym
+      arguments = message[4].split("#{cmd} ")[1] || ""
+      ws.send("#{room}|#{self.send cmd, arguments, room, user}")
     end
   end
 

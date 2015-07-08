@@ -11,7 +11,7 @@ class Seen
 
   def do(message)
     messages = message.split('|')
-    if messages[1] == 'c:'
+    if messages[1] == 'c:' and $start_time < messages[2].to_i
       user = messages[3].downcase.gsub(/[^A-z0-9]/,'')
       $seen_data[user] = Time.now.to_i
       ''

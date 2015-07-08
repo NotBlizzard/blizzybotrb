@@ -1,10 +1,10 @@
 require 'rest_client'
-require 'action_view'
-require 'active_support'
 require 'open-uri'
 require 'rubygems'
 require 'hyoka'
-
+require 'time-lord'
+require 'time_diff'
+require 'byebug'
 require 'cgi'
 
 require './chat-parser.rb'
@@ -15,8 +15,13 @@ unless File.exist?('ranks.json')
 end
 
 module Commands
-  include ActionView::Helpers::DateHelper
   ROOT = File.dirname(File.absolute_path(__FILE__))
+
+  def uptime(args, room, user)
+    return '' unless user.can('uptime')
+    # Hackish way is hackish.
+    self.say(room, "Uptime is currently #{(Time.now.to_i - $start_time).ago.to_words.to_s.split(' ago')[0]}")
+  end
 
   def slap(args, room, user)
     return '' unless user.can('slap')
@@ -25,8 +30,14 @@ module Commands
 
   def seen(args, room, user)
     return '' unless user.can('seen')
+    args = args.downcase.gsub(/[^a-z0-9]/,'')
+    if user.gsub(/[^a-z0-9]/) == args
+      return self.say(room, "Look in the mirror.")
+    end
     if $seen_data.keys.include? args
-      self.say(room, "#{args} was last seen #{distance_of_time_in_words($seen_data[args])}")
+      self.say(room, "#{args} was last seen #{(Time.now.to_i - $seen_data[args].seconds).ago.to_words}")
+    else
+      self.say(room, "#{args} has never been seen before.")
     end
   end
 
@@ -39,10 +50,6 @@ module Commands
       end
     end
     "#{correct_pokemon}"
-  end
-
-  def uptime(args, room, user)
-    #self.say(room, `ps #{Process.pid} -o lstart`.lines.last.to_s.split("500 ")#[1].split(' ')[0])
   end
 
   def l(args, room, user)

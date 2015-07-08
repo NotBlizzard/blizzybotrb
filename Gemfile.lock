@@ -8,26 +8,18 @@ GIT
 GEM
   remote: https://rubygems.org/
   specs:
-    actionview (4.2.3)
-      activesupport (= 4.2.3)
-      builder (~> 3.1)
-      erubis (~> 2.7.0)
-      rails-dom-testing (~> 1.0, >= 1.0.5)
-      rails-html-sanitizer (~> 1.0, >= 1.0.2)
     activesupport (4.2.3)
       i18n (~> 0.7)
       json (~> 1.7, >= 1.7.7)
       minitest (~> 5.1)
       thread_safe (~> 0.3, >= 0.3.4)
       tzinfo (~> 1.1)
-    builder (3.2.2)
     byebug (4.0.5)
       columnize (= 0.9.0)
     colorize (0.7.7)
     columnize (0.9.0)
     domain_name (0.5.24)
       unf (>= 0.0.5, < 1.0.0)
-    erubis (2.7.0)
     eventmachine (1.0.7)
     faraday (0.9.1)
       multipart-post (>= 1.2, < 3)
@@ -44,8 +36,6 @@ GEM
       httparty
     i18n (0.7.0)
     json (1.8.3)
-    loofah (2.0.2)
-      nokogiri (>= 1.5.9)
     mime-types (2.6.1)
     mini_portile (0.6.2)
     minitest (5.7.0)
@@ -54,20 +44,16 @@ GEM
     netrc (0.10.3)
     nokogiri (1.6.6.2-x64-mingw32)
       mini_portile (~> 0.6.0)
-    rails-deprecated_sanitizer (1.0.3)
-      activesupport (>= 4.2.0.alpha)
-    rails-dom-testing (1.0.6)
-      activesupport (>= 4.2.0.beta, < 5.0)
-      nokogiri (~> 1.6.0)
-      rails-deprecated_sanitizer (>= 1.0.1)
-    rails-html-sanitizer (1.0.2)
-      loofah (~> 2.0)
     rest-client (1.8.0-x64-mingw32)
       ffi (~> 1.9)
       http-cookie (>= 1.0.2, < 2.0)
       mime-types (>= 1.16, < 3.0)
       netrc (~> 0.7)
     thread_safe (0.3.5)
+    time-lord (1.0.1)
+    time_diff (0.3.0)
+      activesupport
+      i18n
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
     unf (0.1.4)
@@ -81,7 +67,6 @@ PLATFORMS
   x64-mingw32
 
 DEPENDENCIES
-  actionview
   byebug
   cleverbot-api!
   colorize
@@ -90,3 +75,5 @@ DEPENDENCIES
   faye-websocket
   hyoka
   nokogiri
+  time-lord
+  time_diff
