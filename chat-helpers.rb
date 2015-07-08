@@ -2,7 +2,13 @@ require 'faraday'
 require './commands'
 
 
-module ParserHelpers
+module ChatHelpers
+  include Commands
+
+  TEAM_URL = "https://gist.githubusercontent.com/NotBlizzard/e5e367d41e6894a8edd3/raw/0ffdcee8911d0e11c0cff9ba3c234cb93c8a29f6/team"
+  TEAM = Faraday.get(TEAM_URL).body
+  TIERS = ['randombattle', 'ou', 'challengecup1v1']
+
   def login(user, pass, id, challenge, ws)
     url = 'http://play.pokemonshowdown.com/action.php'
     if pass.empty?
@@ -17,39 +23,38 @@ module ParserHelpers
   end
 
   def send_battle_command(message, room, user,symbol, ws)
-    begin
-      cmd = message[3].split(symbol)[1].split(' ')[0]
-      arguments = message[3].split("#{cmd} ")[1] || nil
+    cmd = message[3].split(symbol)[1].split(' ')[0]
+    if Commands.instance_methods(false).include? cmd.downcase.to_sym
+      arguments = message[3].split("#{cmd} ")[1] || ""
       ws.send("#{room}|#{self.send cmd, arguments, room, user}")
-    rescue
     end
   end
 
   def send_command(message, room, user, symbol, ws)
-    begin
+    if message[4].include? " "
       cmd = message[4].split(symbol)[1].split(' ')[0]
-      arguments = message[4].split("#{cmd} ")[1] || nil
-      ws.send("#{room}|#{self.send cmd, arguments, room, user}")
-    rescue
+      if Commands.instance_methods(false).include? cmd.downcase.to_sym
+        arguments = message[4].split("#{cmd} ")[1] || ""
+        ws.send("#{room}|#{self.send cmd, arguments, room, user}")
+      end
+    end
+  end
+
+  def tournament_helper(room,message, ws)
+    data = JSON.parse(message)
+    if data['format'] == 'challengecup1v1'
+      ws.send("#{room}|/tour join")
     end
   end
 
   def battle_helper(message, ws)
-    from = JSON.parse(message)
-    if message.include? "challengecup1v1"
-      ws.send("|/accept #{from['challengesFrom'].invert['challengecup1v1']}")
-      tier = 'cc1v1'
-      return tier
-    elsif message.include? 'randombattle'
-      ws.send("|/accept #{from['challengesFrom'].invert['randombattle']}")
-      tier = 'randombattle'
-      return tier
-    elsif message.include? 'ou'
-      ws.send("|/useteam #{TEAM}")
-      ws.send("|/accept #{from['challengesFrom'].invert['ou']}")
-      tier = 'ou'
-      return tier
-
+    data= JSON.parse(message)
+    challenges_from = data['challengesFrom'].keys[0].to_s
+    tier = data['challengesFrom'][challenges_from]
+    if TIERS.include? tier
+      ws.send("|/utm #{TEAM}")
+      ws.send("|/accept #{challenges_from}")
+      return tier, true
     end
   end
 end

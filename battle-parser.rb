@@ -6,11 +6,13 @@ SUPER_EFFECTIVENESS = JSON.parse(Faraday.get("https://gist.githubusercontent.com
 RESISTANCES         = JSON.parse(Faraday.get("https://gist.githubusercontent.com/NotBlizzard/cc46e43ac6df8e87e1f9/raw/84e8164a2a92bed7ca81fc7df503209975a1fef6/resistances.json").body)
 IMMUNITIES          = JSON.parse(Faraday.get("https://gist.githubusercontent.com/NotBlizzard/ae9017358a93d49ad25f/raw/64a3961aaa8b0697c815b340eec164eec7e0e4e2/immunities.json").body)
 
+require 'json'
 
 class BattleParser
+  include BattleHelpers
   attr_accessor :ws, :bot, :opponent, :team, :data
 
-  def initialize(ws, bot, opponent, tier, data, room)
+  def initialize(ws, bot, opponent, tier, data, room, player_one)
     @ws = ws
     @tier = tier
     @data = data
@@ -19,62 +21,65 @@ class BattleParser
     @opponent = opponent
     @megaed = false
     @messages = data.split('|')
-    @player_one = true
+    @player_one = player_one
   end
 
   def win_lose_tie(room)
-    ws.send("#{room}|good game")
-    ws.send("#{room}|/part")
+    @ws.send("#{room}|good game")
+    @ws.send("#{room}|/part")
   end
 
 
-  def faint(room, team)
-    pkmn = @messages[2].split(': ')[1]
+  def faint(room, team, moves, bot, opponent)
+    pkmn = @messages[2].split(': ')[1].downcase
     if @player_one
       if @data.include? "p1a: "
         team.find{|x| x[:nick] == pkmn}[:fainted] = true
         @bot[:hp] = 0
-        move = BattleHelpers.decide(moves, bot, opponent)
+        move = decide(moves, bot, opponent, @tier, team)
+        ws.send("#{room}|#{move}")
+      end
+    else
+      if @data.include? "p2a: "
+        team.find{|x| x[:nick] == pkmn}[:fainted] = true
+        @bot[:hp] = 0
+        move = decide(moves, bot, opponent, @tier, team)
         ws.send("#{room}|#{move}")
       end
     end
   end
 
-  def switch(team)
+  def get_bot_switch(team)
     if @player_one
-      if @messages[2].include? 'p1a'
-        unless @tier == 'cc1v1'
-          @bot = get_bot_switch(team)
-        end
-      else
-       @opponent = self.get_opponent_switch
+      if @data.include? "p1a"
+        bot = self.get_bot_switch_values(team)
+        bot
       end
     else
-      if @messages[2].include? 'p2a'
-        unless @tier == 'cc1v1'
-          @bot = self.get_bot_switch(team)
-        end
-      else
-       @opponent = self.get_opponent_switch
+      if @data.include? "p2a"
+        bot = self.get_bot_switch_values(team)
+        bot
       end
     end
-    byebug
   end
+
+  # TODO: merge commands
 
   def player(moves, team)
     if @player_one
       if @data.include? "p2a: "
         @bot = self.get_bot_player(team, 'p1')
         @opponent = self.get_opponent_player(@data, 'p2')
-        move = BattleHelpers.decide(moves, @bot, @opponent)
-        ws.send("#{room}|#{move}")
+        #TODO: change to Mega_or_not
+        move = decide(moves, @bot, @opponent, @tier, team)
+        @ws.send("#{room}|#{move}")
       end
     else
       if @data.include? 'p2a: '
         @bot = self.get_bot_player(team, 'p2')
         @opponent = self.get_opponent_player(@data, 'p1')
-        move = BattleHelpers.decide(moves, @bot, @opponent)
-        ws.send("#{room}|#{move}")
+        move = decide(moves, @bot, @opponent, @tier, team)
+        @ws.send("#{room}|#{move}")
       end
     end
   end
@@ -96,30 +101,30 @@ class BattleParser
     return opponent
   end
 
-  def get_bot_switch(team)
+  def get_bot_switch_values(team)
     you = {}
+    you[:hp] = @messages[4].to_i
     you[:name] = @messages[3].split(',')[0].downcase.gsub(/[^A-z0-9]/,'')
     you[:type] = POKEDEX[you[:name]]['types'].map(&:downcase)
+    you[:ability] = team.find{|x| x[:name] == you[:name]}[:ability]
+    you[:moves] = team.find{|x| x[:name] == you[:name]}[:moves]
     you[:item] = team.find{|x| x[:name] == you[:name]}[:item]
     you[:speed] = POKEDEX[you[:name]]['baseStats']['spe']
     return you
   end
 
-  def get_opponent_switch
+  def get_opponent_switch_values
     opponent = {}
-    opponent[:name] = @messages[3].split(',')[0].downcase
+    opponent[:hp] = @messages[4].to_i
+    opponent[:name] = @messages[3].split(',')[0].downcase.gsub(/[^a-z0-9]/,'')
     opponent[:type] = POKEDEX[opponent[:name]]['types']
     opponent[:speed] = POKEDEX[opponent[:name]]['baseStats']['spe']
     return opponent
   end
 
 
-  def get_hp which_message
-    if which_message == 2
-      message = @messages[2]
-    else
-      message = @messages[3]
-    end
+  def get_hp
+    message = @messages[3]
     hp = Rational(message.split('/')[0]) / message.split('/')[1].to_f
     if data.include? " "
       hp = Rational(message.split('/')[0]) / message.split('/')[1].split(' ')[0].to_f
@@ -132,33 +137,12 @@ class BattleParser
     you = {}
     you[:item] = data['side']['pokemon'][0]['item']
     you[:mega] = data['side']['pokemon'][0]['canMegaEvo']
+    you[:ability] = data['side']['pokemon'][0]['ability']
     you[:name] = data['side']['pokemon'][0]['details'].split(',')[0].gsub(/[^A-z0-9]/,'')
     you[:type] = POKEDEX[you[:name].downcase]["types"]
     you[:moves] = data['side']['pokemon'][0]['moves']
     return you
   end
-
-  def mega_or_not(team, moves)
-    move = BattleHandler.decide(moves, @bot, @opponent)
-    unless @@tier == 'cc1v1'
-      if team.find{|x| x[:name].downcase == @bot[:name]}[:mega] == true
-        if @megaed == false
-          @ws.send("#{room}|#{move} mega")
-          @magaed = true
-        end
-      else
-        @ws.send("#{room}|#{move}")
-      end
-    else
-      if @bot[:mega] == true
-        @ws.send("#{room}|#{move} mega")
-      else
-        @ws.send("#{room}|#{move}")
-      end
-    end
-    @ws.send("#{room}|#{move}")
-  end
-
 
   def get_team(message)
     team = []
@@ -167,7 +151,7 @@ class BattleParser
       team << {
         :nick    => pkmn['ident'].split(': ')[1].downcase,
         :name    => pkmn['details'].split(',')[0].gsub(/[^A-z0-9]/, '').downcase,
-        :moves   => pkmn['moves'].to_a.map(&:downcase),
+        :moves   => pkmn['moves'],
         :item    => pkmn['item'].downcase,
         :ability => pkmn['baseAbility'].downcase,
         :mega    => pkmn['canMegaEvo'],
@@ -180,43 +164,50 @@ class BattleParser
     team
   end
 
-  def get_moves
-    data = JSON.parse(@messages[2])
-    moves = []
-    data['active'][0]['moves'].each_with_index do |_, i|
-      moves << {
-        :name     => data['active'][0]['moves'][i]['id'],
-        :type     => MOVES[data['active'][0]['moves'][i]['id'].downcase.gsub('-','')]['type'].downcase,
-        :power    => MOVES[data['active'][0]['moves'][i]['id'].downcase.gsub('-','')]['basepower'],
-        :priority => MOVES[data['active'][0]['moves'][i]['id'].downcase.gsub('-','')]['priority']
+  def get_moves(moves)
+    # Moves array to hold moves.
+    m = []
+    puts "Moves are #{moves}"
+    moves.each do |move|
+      move.downcase.gsub!(/[0-9]/,'')
+      m << {
+        :name     => move,
+        :type     => MOVES[move]['type'].downcase,
+        :power    => MOVES[move]['basePower'],
+        :priority => MOVES[move]['priority']
       }
     end
-    return moves
+    return m
   end
 
 
-  def request(message, room)
-    @ws.send("#{room}|good luck have fun.")
-    @ws.send("#{room}|/team #{rand(1...7)}")if @tier == 'cc1v1' or @tier == 'ou'
+  def request(message, room, pick, moves, team)
+    @ws.send("#{room}|/team #{pick}") if @tier == 'cc1v1' or @tier == 'ou'
     unless message.include? 'side'
       @bot = get_bot_request(message)
+    end
+    if message.include? 'forceSwitch'
+      forced_pkmn = JSON.parse(message)['side']['pokemon'][0]['details'].split(',')[0]
+      temp_team = team
+      temp_team.delete_if? {|x| x[:name] == forced_pkmn.downcase}
+      move = decide(moves, @bot, @opponent, @tier, team)
     end
   end
 
   def damage
     if @player_one
       if @messages[2].include? "p1a"
-        if @message[3].include? 'fnt'
+        if @messages[3].include? 'fnt'
           @bot[:hp] = 0
         else
-          @bot[:hp] = self.get_hp 2
+          @bot[:hp] = self.get_hp
         end
       end
     else
       if @messages[3].include? 'fnt'
         @opponent[:hp] = 0
       else
-        @opponent[:hp] = self.get_hp_3
+        @opponent[:hp] = self.get_hp
       end
     end
   end

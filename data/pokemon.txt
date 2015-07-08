@@ -80,7 +80,7 @@ slowpoke
 slowbro
 magnemite
 magneton
-farfetch'd
+farfetchd
 doduo
 dodrio
 seel
@@ -119,7 +119,7 @@ goldeen
 seaking
 staryu
 starmie
-mr. mime
+mrmime
 scyther
 jynx
 electabuzz

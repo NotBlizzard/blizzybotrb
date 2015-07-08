@@ -1,4 +1,6 @@
 require 'rest_client'
+require 'action_view'
+require 'active_support'
 require 'open-uri'
 require 'rubygems'
 require 'hyoka'
@@ -13,9 +15,34 @@ unless File.exist?('ranks.json')
 end
 
 module Commands
+  include ActionView::Helpers::DateHelper
+  ROOT = File.dirname(File.absolute_path(__FILE__))
+
   def slap(args, room, user)
     return '' unless user.can('slap')
     self.say(room, "/me slaps #{args} with a fish.")
+  end
+
+  def seen(args, room, user)
+    return '' unless user.can('seen')
+    if $seen_data.keys.include? args
+      self.say(room, "#{args} was last seen #{distance_of_time_in_words($seen_data[args])}")
+    end
+  end
+
+  def unscramble(args, room, user)
+    pokemon = File.read(ROOT + '/data/pokemon.txt').lines.map{|x| x.delete!("\n") }
+    correct_pokemon = ''
+    pokemon.each do |pokemon|
+      if pokemon.chars.sort.join == args.chars.sort.join
+        correct_pokemon = pokemon
+      end
+    end
+    "#{correct_pokemon}"
+  end
+
+  def uptime(args, room, user)
+    #self.say(room, `ps #{Process.pid} -o lstart`.lines.last.to_s.split("500 ")#[1].split(' ')[0])
   end
 
   def l(args, room, user)
@@ -95,9 +122,13 @@ module Commands
     end
   end
 
-  def irb(args, room, user)
-    #return '' unless user.can('eval')
-    self.say(room, "#{eval(args)}")
+  def >(args, room, user)
+    return '' unless user.can('eval')
+    begin
+      self.say(room, "#{eval(args)}")
+    rescue
+      self.say(room, "Error.")
+    end
   end
 
   def a(a, r, u)
@@ -142,9 +173,12 @@ module Commands
   end
 
   def hotpatch(args, room, user)
-    return '' unless user.can('reload')
+    #return '' unless user.can('reload')
     begin
       case args
+      when 'plugins'
+        Dir[ROOT + '/chat-plugins/*.rb'].each {|file| load file }
+        self.say(room, "#{args} reloaded.")
       when 'commands'
         load './commands.rb'
         self.say(room, "#{args} reloaded.")
@@ -153,9 +187,12 @@ module Commands
         self.say(room, "#{args} reloaded.")
       when 'battles'
         load './battle.rb'
+        load './battle-helpers.rb'
+        load './battle-parser.rb'
         self.say(room, "#{args} reloaded.")
-      when 'parser'
-        load './parser.rb'
+      when 'chat'
+        load './chat-parser.rb'
+        load './chat-helpers.rb'
         self.say(room, "#{args} reloaded.")
       else
         self.say(room, "#{args} is not recognized as a hotpatch.")
@@ -222,21 +259,8 @@ module Commands
   end
 
   def echo(args, room, user)
-    if user.downcase.include? "terlor"
-      return "no"
-    end
     return '' unless user.can('echo')
     args
   end
-
-  #def define(args, room, user)
-  #  return '' unless user.can('define')
-  #  begin
-  #    dictionary = Nokogiri::HTML(open("http://www.dictionary.reference.com/browse/#{args.downcase}"))
-  #    return "#{args}: #{dictionary.css('.def-content')[0].content.strip}"
-  #  rescue
-   #   return "#{args} is not a word."
-   # end
-  # end
 end
 

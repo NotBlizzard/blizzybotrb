@@ -1,7 +1,10 @@
 require 'rubygems'
 require 'bundler/setup'
 
-require './bot.rb'
+ROOT = File.dirname(File.absolute_path(__FILE__))
+Dir[ROOT + '/chat-plugins/*.rb'].each {|file| require file }
+
+require './chat-parser.rb'
 require 'eventmachine'
 require 'yaml'
 
@@ -20,6 +23,7 @@ EventMachine.run do
     options['server'],
     options['owner'],
     options['symbol'],
-    options['log']
-  ).go
+    true,
+    [Seen]
+  ).run
 end

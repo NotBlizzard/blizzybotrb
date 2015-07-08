@@ -2,17 +2,17 @@ require 'byebug'
 require 'faraday'
 
 module BattleHelpers
-
   # Constants
+  @@megaed = false
 
   # Effectiveness: Returns what said types (in total) are weak, immunue, and reistant against.
-  def effectiveness(types)
+  def effectiveness(types, ability='none')
     weak_against = []
     resist_against = []
     immune_against = []
     types.each do |type|
       weak_against << WEAKNESSES[type]
-      resistant_against << RESISTANCES[type]
+      resist_against << RESISTANCES[type]
       immune_against << IMMUNITIES[type]
     end
     weak_against.flatten!
@@ -30,16 +30,24 @@ module BattleHelpers
       end
     end
 
-    return {:weak => weak_against.uniq.map(&:to_s), :immune => immune_against.map(&:to_sym), :resist => resist_against.uniq.map(&:to_s)}
+    if ability == 'levitate'
+      weak_against.delete("ground")
+    end
+
+    unless immune_against.nil? or immune_against.empty?
+      return {:weak => weak_against.uniq.map(&:to_s), :immune => immune_against.map(&:to_s), :resist => resist_against.uniq.map(&:to_s)}
+    else
+      return {:weak => weak_against.uniq.map(&:to_s), :immune => [], :resist => resist_against.uniq.map(&:to_s)}
+    end
   end
 
-  def decide(moves, bot, opponent)
+  def decide(moves, you, opponent, tier, team)
+    opponent[:type].map{|x| x.downcase! }
     moves_power = []
     strongest = ''
     opponent_weaknesses  = []
     opponent_resistances = []
     opponent_immunities  = []
-
     opponent[:type].each do |p|
       opponent_weaknesses  << WEAKNESSES[p.downcase]
       opponent_resistances << RESISTANCES[p.downcase]
@@ -49,8 +57,9 @@ module BattleHelpers
     opponent_abilities   = POKEDEX[opponent[:name].downcase]['abilities'].values.flatten.map(&:downcase)
     opponent_weaknesses  = opponent_weaknesses.flatten.map(&:downcase).uniq
     opponent_resistances = opponent_resistances.flatten.map(&:downcase).uniq
-    opponent_immunities  = opponent_immunities.flatten.map(&:downcase).uniq
-
+    unless opponent_immunities.empty? or opponent_immunities.nil?
+      opponent_immunities  = opponent_immunities.flatten.uniq
+    end
     moves.each do |move|
       mod = 1
       counts = Hash.new 0
@@ -74,10 +83,7 @@ module BattleHelpers
         mod = 0
       end
 
-      unless moves_power.length >= 4
-        moves_power << {:power => move[:power] * mod, :name => move[:name], :mod => mod}
-        moves_power = moves_power
-      end
+      moves_power << {:power => move[:power] * mod, :name => move[:name], :mod => mod}
       # Allow Sigilyph to set up.
       if you[:name].downcase == 'sigilyph'
         return "/move #{['cosmicpower', 'storedpower'].sample}"
@@ -86,21 +92,46 @@ module BattleHelpers
 
     strongest = moves_power.max_by {|x| x[:power]}
     strongest = {:power => 0,:mod => 0,:name => ''}  if strongest.nil? or strongest.empty?
-
+    switched = true
     # Check if the mod is less than 1, if opp has type adv, or pokemon fainted.
-    if ((strongest[:mod].to_i < 1) and (tier != 'cc1v1')) or (opp[:type] & effectiveness(you[:type])[:weak].map(&:to_s)).any? or you[:hp] <= 0
-      puts 'in loop'
-      opp[:type].each do |type|
+    puts "opponent type is #{opponent[:type]} and I am weak to #{effectiveness(you[:type])[:weak]}"
+    if ((strongest[:mod].to_i < 1) and (tier != 'cc1v1')) or (opponent[:type] & effectiveness(you[:type], you[:ability])[:weak].map(&:to_s)).any? or you[:hp] <= 0
+      switched = false
+      opponent[:type].each do |type|
         team.each_with_index do |member, i|
-          opp[:type] = opp[:type].map(&:downcase)
-          if ( effectiveness(opp[:type])[:weak].map(&:to_s) & member[:type].map(&:to_s) ).any?
-            team[0], team[i] = team[i], team[0]
-            return "/switch #{i.to_i+1}"
+          opponent[:type] = opponent[:type].map(&:downcase)
+          if (effectiveness(opponent[:type])[:weak].map(&:to_s) & member[:type].map(&:to_s)).any?
+            unless team[i][:fainted] == true
+              unless team[i][:name] == you[:name]
+                team[0], team[i] = team[i], team[0]
+                switched = true
+                puts "im switching into #{i.to_i+1} which is #{team[i]}"
+                return "/switch #{i.to_i+1}"
+              end
+            end
           end
         end
       end
     end
 
-    "/move #{strongest[:name].downcase}"
+    if switched == false # This means the bot couldn't find a good matchup
+      switched_pokemon = team.select{|x| x[:fainted] != false}.sample
+      byebug
+      return "/switch #{team.index(switched_pokemon)+1}"
+    end
+
+    mega_or_not = ''
+
+    unless tier == 'cc1v1'
+      if team.find{|x| x[:name].downcase == you[:name]}[:mega] == true and @@megaed == false
+        mega_or_not = 'mega'
+        @@megaed = true
+      end
+    else
+      if you[:mega] == true
+        mega_or_not = 'mega'
+      end
+    end
+    "/move #{strongest[:name].downcase} #{mega_or_not}"
   end
 end
