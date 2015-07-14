@@ -27,9 +27,9 @@ class Battle
     when 'request'
       unless @have_team
         @team = handler.get_team(message[2])
+        File.open('d.json','a') {|a| a.write(@team.to_json)}
         @have_team = true
       end
-      @pick = rand(1...7)
       @pick = 1 if @tier == 'randombattle'
       handler.request(message[2], room, @pick, @moves, @team)
 
@@ -61,7 +61,6 @@ class Battle
       ws.send("#{room}|good luck have fun. I am a bot.") if message[2].to_i == 1 and @tier == 'cc1v1'
       move = decide(@moves, @bot, @opponent, @tier, @team)
       ws.send("#{room}|#{move}")
-      puts "move is #{move}"
 
     when 'drag'
       @bot = handler.get_bot_switch_values(@team)

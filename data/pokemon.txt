@@ -247,7 +247,7 @@ larvitar
 pupitar
 tyranitar
 lugia
-ho-oh
+hooh
 celebi
 treecko
 grovyle
@@ -436,7 +436,7 @@ skuntank
 bronzor
 bronzong
 bonsly
-mime jr.
+mimejr
 happiny
 chatot
 spiritomb
@@ -471,7 +471,7 @@ leafeon
 glaceon
 gliscor
 mamoswine
-porygon-z
+porygonz
 gallade
 probopass
 dusknoir

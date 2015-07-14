@@ -36,14 +36,14 @@ class BattleParser
       if @data.include? "p1a: "
         team.find{|x| x[:nick] == pkmn}[:fainted] = true
         @bot[:hp] = 0
-        move = decide(moves, bot, opponent, @tier, team)
+        move = decide(moves, @bot, opponent, @tier, team)
         ws.send("#{room}|#{move}")
       end
     else
       if @data.include? "p2a: "
         team.find{|x| x[:nick] == pkmn}[:fainted] = true
         @bot[:hp] = 0
-        move = decide(moves, bot, opponent, @tier, team)
+        move = decide(moves, @bot, opponent, @tier, team)
         ws.send("#{room}|#{move}")
       end
     end
@@ -104,7 +104,7 @@ class BattleParser
   def get_bot_switch_values(team)
     you = {}
     you[:hp] = @messages[4].to_i
-    you[:name] = @messages[3].split(',')[0].downcase.gsub(/[^A-z0-9]/,'')
+    you[:name] = @messages[3].split(',')[0].downcase.gsub(/[^a-z0-9]/,'')
     you[:type] = POKEDEX[you[:name]]['types'].map(&:downcase)
     you[:ability] = team.find{|x| x[:name] == you[:name]}[:ability]
     you[:moves] = team.find{|x| x[:name] == you[:name]}[:moves]
@@ -117,6 +117,10 @@ class BattleParser
     opponent = {}
     opponent[:hp] = @messages[4].to_i
     opponent[:name] = @messages[3].split(',')[0].downcase.gsub(/[^a-z0-9]/,'')
+    # Hacky hack is hack.
+    if opponent[:name].include? 'hoopa'
+      opponent[:name] = 'hoopa'
+    end
     opponent[:type] = POKEDEX[opponent[:name]]['types']
     opponent[:speed] = POKEDEX[opponent[:name]]['baseStats']['spe']
     return opponent
@@ -156,7 +160,7 @@ class BattleParser
         :ability => pkmn['baseAbility'].downcase,
         :mega    => pkmn['canMegaEvo'],
         :speed   => pkmn['stats']['spe'],
-        :type    => POKEDEX[pkmn['details'].split(',')[0].gsub(/[^A-z0-9]/,'').downcase]['types'].map(&:downcase),
+        :type    => POKEDEX[pkmn['details'].split(',')[0].downcase.gsub(/[^a-z0-9]/,'')]['types'].map(&:downcase),
         :fainted => false
       }
     end
@@ -169,7 +173,7 @@ class BattleParser
     m = []
     puts "Moves are #{moves}"
     moves.each do |move|
-      move.downcase.gsub!(/[0-9]/,'')
+      move = move.downcase.gsub(/[^a-z]/,'')
       m << {
         :name     => move,
         :type     => MOVES[move]['type'].downcase,
@@ -187,10 +191,11 @@ class BattleParser
       @bot = get_bot_request(message)
     end
     if message.include? 'forceSwitch'
-      forced_pkmn = JSON.parse(message)['side']['pokemon'][0]['details'].split(',')[0]
-      temp_team = team
-      temp_team.delete_if {|x| x[:name] == forced_pkmn.downcase}
-      move = decide(moves, @bot, @opponent, @tier, temp_team)
+      forced_pkmn = JSON.parse(message)['side']['pokemon'][0]['details'].split(',')[0].downcase.gsub(/[^a-z0-9]/,'')
+      puts "#{forced_pkmn} must switch"
+      forced_pkmn = forced_pkmn.split('mega')[0] if forced_pkmn.include? 'mega'
+      team.find {|x| x[:name] == forced_pkmn}[:forced_to_switch] = true
+      move = decide(moves, @bot, @opponent, @tier, team)
     end
   end
 

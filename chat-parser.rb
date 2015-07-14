@@ -92,8 +92,8 @@ class Bot
         when 'updateuser'
           @rooms.each { |r| @ws.send("|/join #{r}") }
 
-        when 'tournament'
-          tournament_helper(@room, messages[3], @ws)
+        #when 'tournament'
+        #  tournament_helper(@room, messages[3], @ws)
 
         when 'player'
           battleroom = @room[/\d+/]

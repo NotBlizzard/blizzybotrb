@@ -16,7 +16,6 @@ module ChatHelpers
       ws.send("|/trn #{user},0,#{data.body}")
     else
       data = Faraday.post url, {:act => 'login', :name => user, :pass => pass, :challengekeyid => id, :challenge => challenge}
-      puts 'data is'+data.body
       data = JSON.parse(data.body.split(']')[1])
       ws.send("|/trn #{user},0,#{data['assertion']}")
     end
@@ -44,7 +43,7 @@ module ChatHelpers
 
   def tournament_helper(room,message, ws)
     data = JSON.parse(message)
-    if data['format'] == 'challengecup1v1'
+    if TIERS.include? data['format']
       ws.send("#{room}|/tour join")
     end
   end
