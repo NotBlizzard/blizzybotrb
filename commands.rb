@@ -35,7 +35,7 @@ module Commands
       return self.say(room, "Look in the mirror.")
     end
     if $seen_data.keys.include? args
-      self.say(room, "#{args} was last seen #{(Time.now.to_i - $seen_data[args].seconds).ago.to_words}")
+      self.say(room, "#{args} was last seen about #{(Time.now.to_i - $seen_data[args].seconds).ago.to_words}")
     else
       self.say(room, "#{args} has never been seen before.")
     end
@@ -52,24 +52,21 @@ module Commands
     "#{correct_pokemon}"
   end
 
-  def l(args, room, user)
+  def ladder(args, room, user)
     return '' unless user.can('ladder')
     if ($ladder)
       $ladder = false
       self.say(room, "Laddering is now off.")
     else
       $ladder = true
-      @ws.send("#{room}|/search challengecup1v1")
-      self.say(room, "I am now laddering.")
+      if TIERS.include? args
+        $ladder_tier = args
+        @ws.send("#{room}|/search #{args}")
+        self.say(room, "I am now laddering.")
+      else
+        self.say(room, "not a valid tier.")
+      end
     end
-  end
-
-  def remind(args, room, user)
-    Thread.new {
-      sleep(args)
-      #self.say(room, "Hello")
-      puts "OK"
-    }.join
   end
 
   def talk(args, room, user)
@@ -164,23 +161,13 @@ module Commands
     self.say(room, "The rank for #{args} is: #{command_rank}")
   end
 
-  #def google(args, user)
-  # return '' unless user.can('google')
-  #  url  =  "http://www.google.com/search?q=#{CGI.escape(args)}"
-  #  data  =  Nokogiri::HTML(open(url)).at('h3.r')
-  #  data_string = data.at('./following::div').children.first.text
-  #  data_string.gsub!(/(CachedSimilar|Cached)/, '')
-  #  text  =  data.text
-  #  "#{text} | #{data_string}"
-  #end
-
   def salt(args, user)
     return '' unless user.can('salt')
     "#{args} is #{(Random.rand(0.0..100.0)).round(2)}% salty."
   end
 
   def hotpatch(args, room, user)
-    #return '' unless user.can('reload')
+    return '' unless user.can('reload')
     begin
       case args
       when 'plugins'

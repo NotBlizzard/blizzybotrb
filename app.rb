@@ -25,5 +25,6 @@ EventMachine.run do
     options['symbol'],
     true,
     [Seen]
-  ).run
+  )
+  bot.run
 end

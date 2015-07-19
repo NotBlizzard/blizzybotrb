@@ -32,7 +32,7 @@ class BattleParser
 
   def faint(room, team, moves, bot, opponent)
     pkmn = @messages[2].split(': ')[1].downcase
-    if @player_one
+    if @player_one or @player_one.nil?
       if @data.include? "p1a: "
         team.find{|x| x[:nick] == pkmn}[:fainted] = true
         @bot[:hp] = 0
@@ -50,7 +50,7 @@ class BattleParser
   end
 
   def get_bot_switch(team)
-    if @player_one
+    if @player_one or @player_one.nil?
       if @data.include? "p1a"
         bot = self.get_bot_switch_values(team)
         bot
@@ -66,7 +66,7 @@ class BattleParser
   # TODO: merge commands
 
   def player(moves, team)
-    if @player_one
+    if @player_one or @player_one.nil?
       if @data.include? "p2a: "
         @bot = self.get_bot_player(team, 'p1')
         @opponent = self.get_opponent_player(@data, 'p2')
@@ -95,7 +95,7 @@ class BattleParser
 
   def get_opponent_player(p2_split)
     opponent = {}
-    opponent[:name] = @data.split("#{p2_split}a: ")[1].split('|')[0].downcase.gsub(/[^A-z0-9]/, '')
+    opponent[:name] = @data.split("#{p2_split}a: ")[1].split('|')[0].downcase.gsub(/[^A-z0-9]/, '').gsub(/mega/,'')
     opponent[:type] = POKEDEX[opponent[:name]]['types'].map(&:downcase)
     opponent[:speed] = POKEDEX[opponent[:name]]['baseStats']['spe']
     return opponent
@@ -104,7 +104,7 @@ class BattleParser
   def get_bot_switch_values(team)
     you = {}
     you[:hp] = @messages[4].to_i
-    you[:name] = @messages[3].split(',')[0].downcase.gsub(/[^a-z0-9]/,'')
+    you[:name] = @messages[3].split(',')[0].downcase.gsub(/[^a-z0-9]/,'').gsub(/mega/,'')
     you[:type] = POKEDEX[you[:name]]['types'].map(&:downcase)
     you[:ability] = team.find{|x| x[:name] == you[:name]}[:ability]
     you[:moves] = team.find{|x| x[:name] == you[:name]}[:moves]
@@ -186,11 +186,11 @@ class BattleParser
 
 
   def request(message, room, pick, moves, team)
-    @ws.send("#{room}|/team #{pick}") if @tier == 'cc1v1' or @tier == 'ou'
+    @ws.send("#{room}|/team #{pick}") if @tier == 'challengecup1v1' or @tier == 'overused'
     unless message.include? 'side'
       @bot = get_bot_request(message)
     end
-    if message.include? 'forceSwitch'
+    if message.downcase.include? 'forceswitch'
       forced_pkmn = JSON.parse(message)['side']['pokemon'][0]['details'].split(',')[0].downcase.gsub(/[^a-z0-9]/,'')
       puts "#{forced_pkmn} must switch"
       forced_pkmn = forced_pkmn.split('mega')[0] if forced_pkmn.include? 'mega'
@@ -200,7 +200,7 @@ class BattleParser
   end
 
   def damage
-    if @player_one
+    if @player_one or @player_one.nil? # Hackish hack.
       if @messages[2].include? "p1a"
         if @messages[3].include? 'fnt'
           @bot[:hp] = 0

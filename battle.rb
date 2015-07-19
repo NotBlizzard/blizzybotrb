@@ -27,7 +27,6 @@ class Battle
     when 'request'
       unless @have_team
         @team = handler.get_team(message[2])
-        File.open('d.json','a') {|a| a.write(@team.to_json)}
         @have_team = true
       end
       @pick = 1 if @tier == 'randombattle'
@@ -35,6 +34,9 @@ class Battle
 
     when 'win','lose','tie'
       handler.win_lose_tie(room)
+      if $ladder
+        ws.send("|/search #{$ladder_tier}")
+      end
 
     when 'faint'
       handler.faint(room, @team, @moves, @bot, @opponent)
@@ -55,10 +57,9 @@ class Battle
     when 'teampreview'
       ws.send("#{room}|good luck have fun. I am a bot.")
       ws.send("#{room}|/team #{@pick}")
-      puts "I picked #{@pick}"
 
     when 'turn'
-      ws.send("#{room}|good luck have fun. I am a bot.") if message[2].to_i == 1 and @tier == 'cc1v1'
+      ws.send("#{room}|good luck have fun. I am a bot.") if message[2].to_i == 1 and @tier == 'challengecup1v1'
       move = decide(@moves, @bot, @opponent, @tier, @team)
       ws.send("#{room}|#{move}")
 
@@ -66,17 +67,17 @@ class Battle
       @bot = handler.get_bot_switch_values(@team)
 
     when 'switch'
-      if @player_one
+      if @player_one or @player_one.nil? # Hackish hack.
         if data.include? "p1a"
           @bot = handler.get_bot_switch_values(@team)
           @moves = handler.get_moves(@bot[:moves])
-        else
+        elsif data.include? "p2a"
           @opponent = handler.get_opponent_switch_values
         end
       else
         if data.include? "p1a"
           @opponent = handler.get_opponent_switch_values
-        else
+        elsif data.include? "p2a"
           @bot = handler.get_bot_switch_values(@team)
           @moves = handler.get_moves(@bot[:moves])
         end

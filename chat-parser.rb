@@ -3,15 +3,15 @@ require './commands'
 require './battle'
 require './chat-helpers.rb'
 
-
 require 'faye/websocket'
 require 'rest-client'
 require 'open-uri'
 require 'faraday'
 require 'json'
-$start_time = ''
 
-TEAM = Faraday.get("https://gist.githubusercontent.com/NotBlizzard/e5e367d41e6894a8edd3/raw/0ffdcee8911d0e11c0cff9ba3c234cb93c8a29f6/team").body
+$start_time = ''
+$ladder = false
+$ladder_tier = 'challengecup1v1'
 
 class Bot
   include ChatHelpers
@@ -22,6 +22,7 @@ class Bot
 
   def initialize(user, pass = '', rooms, server, owner, symbol, log, plugins)
     @room = ""
+    @room_join_time = {}
     @ws = ''
     @prev_message = ''
     @challenged = false
@@ -56,10 +57,12 @@ class Bot
 
         puts message if @log
 
-        if $start_time < @time
-          @plugins.each do |plugin|
-            if message =~ plugin.match
-              @ws.send("#{@room}|#{plugin.new.do(message)}")
+        unless @room_join_time[@room].nil?
+          if Time.now.to_i > @room_join_time[@room]
+            @plugins.each do |plugin|
+              if message =~ plugin.match
+                @ws.send("#{@room}|#{plugin.new.do(message)}")
+              end
             end
           end
         end
@@ -84,13 +87,15 @@ class Bot
         when 'c:'
           @room = '' unless @prev_message.include? ">"
           user = messages[3].downcase
-          @time = messages[2].to_i
-          if messages[4][0] == @symbol and $start_time < @time
+          if messages[4][0] == @symbol and Time.now.to_i > @room_join_time[@room].to_i and !@room.empty?
             send_command(messages, @room, user, @symbol, @ws)
           end
 
         when 'updateuser'
-          @rooms.each { |r| @ws.send("|/join #{r}") }
+          @rooms.each do |r|
+            @ws.send("|/join #{r}")
+            @room_join_time[r] = Time.now.to_i
+          end
 
         #when 'tournament'
         #  tournament_helper(@room, messages[3], @ws)
@@ -102,12 +107,7 @@ class Bot
           end
 
         when 'updatechallenges'
-          data= JSON.parse(messages[2])
-          challenges_from = data['challengesFrom'].keys[0].to_s
-          tier = data['challengesFrom'][challenges_from]
-          unless tier == nil and challenges_from == ""
             @tier, @challenged = battle_helper(messages[2], @ws)
-          end
         end
 
         @prev_message = message

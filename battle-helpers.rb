@@ -2,7 +2,6 @@ require 'byebug'
 require 'faraday'
 
 module BattleHelpers
-  # Constants
   @@megaed = false
 
   # Effectiveness: Returns what said types (in total) are weak, immunue, and reistant against.
@@ -89,29 +88,31 @@ module BattleHelpers
 
       moves_power << {:power => move[:power] * mod, :name => move[:name], :mod => mod}
       # Allow Sigilyph to set up.
-      if you[:name].downcase == 'sigilyph'
-        return "/move #{['cosmicpower', 'storedpower'].sample}"
-      end
     end
-
+    puts "moves power is #{moves_power}"
     strongest = moves_power.max_by {|x| x[:power]}
     strongest = {:power => 0,:mod => 0,:name => ''}  if strongest.nil? or strongest.empty?
     switching = false
     # Check if the mod is less than 1, if opp has type adv, or pokemon fainted.
     puts "opponent type is #{opponent[:type]} and I am weak to #{effectiveness(you[:type])[:weak]}"
-    if ((strongest[:mod].to_i < 1) and (tier != 'cc1v1')) or (opponent[:type] & effectiveness(you[:type], you[:ability])[:weak].map(&:to_s)).any? or you[:hp] <= 0
-      switching = true
-      opponent[:type].each do |type|
-        team.each_with_index do |member, i|
-          opponent[:type] = opponent[:type].map(&:downcase)
-          if (effectiveness(opponent[:type])[:weak].map(&:to_s) & member[:type].map(&:to_s)).any?
-            unless team[i][:fainted] == true
-              unless team[i][:name] == you[:name]
-                if member[:forced_to_switch].nil?
-                  team[0], team[i] = team[i], team[0]
-                  switching = false
-                  puts "im switching into #{i.to_i+1} which is #{team[i]}"
-                  return "/switch #{i.to_i+1}"
+    if ((strongest[:mod].to_i < 1) and (tier != 'challengecup1v1')) or (opponent[:type] & effectiveness(you[:type], you[:ability])[:weak].map(&:to_s)).any? or you[:hp] == 0
+      unless tier == 'challengecup1v1'
+        switching = true
+        puts 'in loop'
+        opponent[:type].each do |type|
+          team.each_with_index do |member, i|
+            opponent[:type] = opponent[:type].map(&:downcase)
+            if (effectiveness(opponent[:type])[:weak].map(&:to_s) & member[:type].map(&:to_s)).any?
+              if team[i][:fainted] == false
+                unless team[i][:name] == you[:name]
+                  if member[:forced_to_switch].nil?
+                    switching = false
+                    puts "im switching into #{team[i]} which is #{i.to_i+1}"
+                    switch_num = i.to_i+1
+                    team[0], team[i] = team[i], team[0]
+
+                    return "/switch #{switch_num}"
+                  end
                 end
               end
             end
@@ -122,13 +123,18 @@ module BattleHelpers
 
     if switching == true # This means the bot couldn't find a good matchup
       switched_pokemon = team.find{|x| x[:fainted] == false}
-      puts "im switching into #{switched_pokemon}"
-      return "/switch #{team.index(switched_pokemon)+1}"
+      unless switched_pokemon.nil?
+        unless switched_pokemon[:name].nil?
+          unless switched_pokemon[:name] == you[:name]
+            return "/switch #{team.index(switched_pokemon)+1}"
+          end
+        end
+      end
     end
 
     mega_or_not = ''
 
-    unless tier == 'cc1v1'
+    unless tier == 'challengecup1v1'
       unless team.find{|x| x[:name].downcase == you[:name].downcase}.nil?
         if @@megaed == false and team.find{|x| x[:name].downcase == you[:name].downcase}[:mega] == true
           mega_or_not = 'mega'
