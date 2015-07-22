@@ -15,7 +15,16 @@ unless File.exist?('ranks.json')
 end
 
 module Commands
+  HYOKA = Hyoka.new
   ROOT = File.dirname(File.absolute_path(__FILE__))
+  RANKS = {
+    ' ' => 0,
+    '+' => 1,
+    '%' => 2,
+    '@' => 3,
+    '&' => 4,
+    '~' => 5
+  }
 
   def uptime(args, room, user)
     return '' unless user.can('uptime')
@@ -81,7 +90,7 @@ module Commands
   end
 
   def flip(arg, room, _)
-    if arg.nil?
+    if arg.nil? or arg.length == 0
       self.say(room,"(╯°□°）╯︵ ┻━┻")
     else
       self.say(room,"(╯°□°）╯︵ #{arg.flip}")
@@ -139,20 +148,20 @@ module Commands
     self.say(room, "#{eval(a)}")
   end
 
-  def sudo(args, room, user)
-    data = args.split(', ')[0]
-    language = args.split(', ')[1]
-    h = Hyoka.new
-    case language
-    when 'py'
-      self.say(room, "> #{h.eval data, 'python/cpython-2.7.8'}")
-    when 'rb'
-      self.say(room, "> #{h.eval data, 'ruby/mri-2.1'}")
-    when 'js'
-      self.say(room, "> #{h.eval data, 'javascript/node-0.10.29'}")
-    when 'php'
-      self.say(room, "> #{h.eval data, 'php/php-5.5.14'}")
-    end
+   def py(args, room, user)
+    self.say(room, "> #{HYOKA.eval('print('+args+')', 'python/cpython-3.4.1')}")
+  end
+
+  def rb(args, room, user)
+    self.say(room, "> #{HYOKA.eval('puts '+args, 'ruby/mri-2.2')}")
+  end
+
+  def js(args, room, user)
+    self.say(room, "> #{HYOKA.eval('console.log('+args+')', 'javascript/node-0.10.29')}")
+  end
+
+  def php(args, room, user)
+    self.say(room, "> #{HYOKA.eval('<?php echo'+args+' ?>', 'php/php-5.5.14')}")
   end
 
   def rank(args, room, user)

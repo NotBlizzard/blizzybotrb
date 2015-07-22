@@ -32,19 +32,23 @@ class BattleParser
 
   def faint(room, team, moves, bot, opponent)
     pkmn = @messages[2].split(': ')[1].downcase
-    if @player_one or @player_one.nil?
+    if @player_one
       if @data.include? "p1a: "
+        #team.delete_if {|x| x[:nick] == pkmn}
         team.find{|x| x[:nick] == pkmn}[:fainted] = true
         @bot[:hp] = 0
         move = decide(moves, @bot, opponent, @tier, team)
-        ws.send("#{room}|#{move}")
+        puts "I decide to #{move}"
+        @ws.send("#{room}|#{move}")
       end
     else
       if @data.include? "p2a: "
+        #team.delete_if {|x| x[:nick] == pkmn}
         team.find{|x| x[:nick] == pkmn}[:fainted] = true
         @bot[:hp] = 0
-        move = decide(moves, @bot, opponent, @tier, team)
-        ws.send("#{room}|#{move}")
+        move  = decide(moves, @bot, opponent, @tier, team)
+        puts "I decide to #{move}"
+        @ws.send("#{room}|#{move}")
       end
     end
   end
@@ -63,15 +67,12 @@ class BattleParser
     end
   end
 
-  # TODO: merge commands
-
   def player(moves, team)
     if @player_one or @player_one.nil?
       if @data.include? "p2a: "
         @bot = self.get_bot_player(team, 'p1')
         @opponent = self.get_opponent_player(@data, 'p2')
-        #TODO: change to Mega_or_not
-        move = decide(moves, @bot, @opponent, @tier, team)
+        move= decide(moves, @bot, @opponent, @tier, team)
         @ws.send("#{room}|#{move}")
       end
     else
@@ -196,6 +197,7 @@ class BattleParser
       forced_pkmn = forced_pkmn.split('mega')[0] if forced_pkmn.include? 'mega'
       team.find {|x| x[:name] == forced_pkmn}[:forced_to_switch] = true
       move = decide(moves, @bot, @opponent, @tier, team)
+      @ws.send("#{room}|#{move}")
     end
   end
 

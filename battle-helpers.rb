@@ -3,6 +3,7 @@ require 'faraday'
 
 module BattleHelpers
   @@megaed = false
+  @@choiced_move = {}
 
   # Effectiveness: Returns what said types (in total) are weak, immunue, and reistant against.
   def effectiveness(types, ability='none')
@@ -100,18 +101,18 @@ module BattleHelpers
         switching = true
         puts 'in loop'
         opponent[:type].each do |type|
-          team.each_with_index do |member, i|
+          team.reverse.each do |member|
             opponent[:type] = opponent[:type].map(&:downcase)
             if (effectiveness(opponent[:type])[:weak].map(&:to_s) & member[:type].map(&:to_s)).any?
-              if team[i][:fainted] == false
-                unless team[i][:name] == you[:name]
+              if member[:fainted] == false
+                unless member[:name] == you[:name]
                   if member[:forced_to_switch].nil?
                     switching = false
-                    puts "im switching into #{team[i]} which is #{i.to_i+1}"
-                    switch_num = i.to_i+1
+                    i = team.index(member)
+                    puts "im switching into #{member} which is /switch #{i+1}"
                     team[0], team[i] = team[i], team[0]
 
-                    return "/switch #{switch_num}"
+                    return "/switch #{i+1}"
                   end
                 end
               end
@@ -122,12 +123,14 @@ module BattleHelpers
     end
 
     if switching == true # This means the bot couldn't find a good matchup
+      puts "I couldnt find a good switch"
       switched_pokemon = team.find{|x| x[:fainted] == false}
       unless switched_pokemon.nil?
-        unless switched_pokemon[:name].nil?
-          unless switched_pokemon[:name] == you[:name]
-            return "/switch #{team.index(switched_pokemon)+1}"
-          end
+        unless switched_pokemon[:name] == you[:name]
+          puts "i'm switching into #{switched_pokemon} which is /switch #{team.index(switched_pokemon)+1}"
+          i = team.index(switched_pokemon)
+          team[0], team[i] = team[i], team[0]
+          return "/switch #{i+1}"
         end
       end
     end
@@ -146,6 +149,15 @@ module BattleHelpers
         mega_or_not = 'mega'
       end
     end
+
+    if ['choiceband','choicescarf','choicespecs'].include? you[:item] and @@choiced_move[you[:name]].nil?
+      @@choiced_move[you[:name]] == strongest[:name].downcase
+    end
+
+    if ['choiceband','choicescarf','choicespecs'].include? you[:item]
+      return "/move #{@@choiced_move[you[:name]]}"
+    end
+
     "/move #{strongest[:name].downcase} #{mega_or_not}"
   end
 end

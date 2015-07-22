@@ -38,6 +38,12 @@ class Battle
         ws.send("|/search #{$ladder_tier}")
       end
 
+    when 'inactive'
+      if data.include? "blizzybot" # make this better
+        move = decide(@moves, @bot, @opponent, @tier, @team)
+        ws.send("#{room}|#{move}")
+      end
+
     when 'faint'
       handler.faint(room, @team, @moves, @bot, @opponent)
 
@@ -55,19 +61,30 @@ class Battle
       handler.damage
 
     when 'teampreview'
-      ws.send("#{room}|good luck have fun. I am a bot.")
       ws.send("#{room}|/team #{@pick}")
 
     when 'turn'
-      ws.send("#{room}|good luck have fun. I am a bot.") if message[2].to_i == 1 and @tier == 'challengecup1v1'
+      ws.send("#{room}|good luck have fun. I am a bot.") if message[2].to_i == 1
       move = decide(@moves, @bot, @opponent, @tier, @team)
       ws.send("#{room}|#{move}")
 
     when 'drag'
-      @bot = handler.get_bot_switch_values(@team)
+      if @player_one
+        if data.include? "p1a"
+          @bot = handler.get_bot_switch_values(@team)
+        else
+          @opponent = handler.get_opponent_switch_values
+        end
+      else
+        if data.include? "p1a"
+          @opponent = handler.get_opponent_switch_values
+        else
+          @bot = handler.get_bot_switch_values(@team)
+        end
+      end
 
     when 'switch'
-      if @player_one or @player_one.nil? # Hackish hack.
+      if @player_one
         if data.include? "p1a"
           @bot = handler.get_bot_switch_values(@team)
           @moves = handler.get_moves(@bot[:moves])
