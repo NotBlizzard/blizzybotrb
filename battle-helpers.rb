@@ -46,6 +46,7 @@ module BattleHelpers
   end
 
   def decide(moves, you, opponent, tier, team)
+    byebug
     opponent[:type].map{|x| x.downcase! }
     moves_power = []
     strongest = ''
@@ -100,21 +101,16 @@ module BattleHelpers
       unless tier == 'challengecup1v1'
         switching = true
         puts 'in loop'
-        opponent[:type].each do |type|
-          team.reverse.each do |member|
-            opponent[:type] = opponent[:type].map(&:downcase)
-            if (effectiveness(opponent[:type])[:weak].map(&:to_s) & member[:type].map(&:to_s)).any?
-              if member[:fainted] == false
-                unless member[:name] == you[:name]
-                  if member[:forced_to_switch].nil?
-                    switching = false
-                    i = team.index(member)
-                    puts "im switching into #{member} which is /switch #{i+1}"
-                    team[0], team[i] = team[i], team[0]
-
-                    return "/switch #{i+1}"
-                  end
-                end
+        team.each do |member|
+          opponent[:type] = opponent[:type].map(&:downcase)
+          if (effectiveness(opponent[:type])[:weak].map(&:to_s) & member[:type].map(&:to_s)).any? and member[:fainted] == false
+            unless member[:name] == you[:name]
+              if member[:forced_to_switch].nil?
+                switching = false
+                i = team.index(member)
+                puts "im switching into #{member} which is /switch #{i+1}"
+                team[0], team[i] = team[i], team[0]
+                return "/switch #{i+1}"
               end
             end
           end
@@ -151,7 +147,7 @@ module BattleHelpers
     end
 
     if ['choiceband','choicescarf','choicespecs'].include? you[:item] and @@choiced_move[you[:name]].nil?
-      @@choiced_move[you[:name]] == strongest[:name].downcase
+      @@choiced_move[you[:name]] = strongest[:name].downcase
     end
 
     if ['choiceband','choicescarf','choicespecs'].include? you[:item]

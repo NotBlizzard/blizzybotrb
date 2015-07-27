@@ -37,10 +37,25 @@ module Commands
     self.say(room, "/me slaps #{args} with a fish.")
   end
 
+  def magic(args, room, user)
+    self.say(room, "(づ｡◕‿‿◕｡)づ・。*。✧・゜゜・。✧。*・゜゜・✧。・­­­­­゜゜・。*。・゜*✧‌‌‌‌‌")
+  end
+
+  def lang(args, room, user)
+    data = JSON.parse(File.read('lang.json'))
+    data[room] = args
+    File.open('lang.json', 'w') {|a| a.write(data.to_json)}
+    self.say(room, "Language for room '#{room}' is now set to '#{args}'")
+  end
+
+  def baka(args, room, user)
+    self.say(room, "#{args}, it's not l-like I-I l-like you or a-anything, baka!!")
+  end
+
   def seen(args, room, user)
     return '' unless user.can('seen')
     args = args.downcase.gsub(/[^a-z0-9]/,'')
-    if user.gsub(/[^a-z0-9]/) == args
+    if user[1..-1].gsub(/[^a-z0-9]/,'') == args
       return self.say(room, "Look in the mirror.")
     end
     if $seen_data.keys.include? args
@@ -170,9 +185,9 @@ module Commands
     self.say(room, "The rank for #{args} is: #{command_rank}")
   end
 
-  def salt(args, user)
+  def salt(args, room, user)
     return '' unless user.can('salt')
-    "#{args} is #{(Random.rand(0.0..100.0)).round(2)}% salty."
+    self.say(room, "#{args} is #{(Random.rand(0.0..100.0)).round(2)}% salty.")
   end
 
   def hotpatch(args, room, user)
@@ -263,7 +278,8 @@ module Commands
 
   def echo(args, room, user)
     return '' unless user.can('echo')
-    args
+
+    self.say(room, args)
   end
 end
 

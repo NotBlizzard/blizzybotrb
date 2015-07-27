@@ -15,7 +15,7 @@ $ladder_tier = 'challengecup1v1'
 
 class Bot
   include ChatHelpers
-  attr_accessor :ws,:room, :user, :rooms, :server, :owner, :symbol, :log, :plugins
+  attr_accessor :ws,:room, :user, :rooms, :server, :owner, :symbol, :log, :plugins, :room_join_time
   @cleverbot = CleverBot.new
   # Yes, I know this is a global variable. I use it for accessing battle information while it is running.
   $battles = {}
@@ -34,6 +34,7 @@ class Bot
     @pass = pass
     @user = user
     @room = ""
+    @tier = ''
     @joined = false
     @time = ''
     @log = log
@@ -58,7 +59,7 @@ class Bot
         puts message if @log
 
         unless @room_join_time[@room].nil?
-          if Time.now.to_i > @room_join_time[@room]
+          if Time.now.to_i > @room_join_time[@room].to_i
             @plugins.each do |plugin|
               if message =~ plugin.match
                 @ws.send("#{@room}|#{plugin.new.do(message)}")
@@ -85,16 +86,21 @@ class Bot
           end
 
         when 'c:'
-          @room = '' unless @prev_message.include? ">"
+          @room = 'lobby' unless @prev_message.include? ">"
           user = messages[3].downcase
-          if messages[4][0] == @symbol and Time.now.to_i > @room_join_time[@room].to_i and !@room.empty?
-            send_command(messages, @room, user, @symbol, @ws)
+          time = messages[2].to_i
+          if messages[4][0] == @symbol and Time.now.to_i > @room_join_time[@room].to_i and Time.now.to_i <= time
+            if @room == 'lobby'
+              send_command(messages, '', user, @symbol, @ws)
+            else
+              send_command(messages, @room, user, @symbol, @ws)
+            end
           end
 
         when 'updateuser'
           @rooms.each do |r|
             @ws.send("|/join #{r}")
-            @room_join_time[r] = Time.now.to_i
+            @room_join_time[r] = Time.now
           end
 
         #when 'tournament'
@@ -103,11 +109,12 @@ class Bot
         when 'player'
           battleroom = @room[/\d+/]
           unless $battles.keys.include? battleroom.to_s
-            $battles[battleroom.to_s] = Battle.new(@tier,@challenged)
+            $battles[battleroom.to_s] = Battle.new(@tier,@user)
           end
 
         when 'updatechallenges'
-            @tier, @challenged = battle_helper(messages[2], @ws)
+          data = JSON.parse(messages[2])
+          @tier, @challenged = battle_helper(messages[2], @ws) unless data['challengeTo'].nil? and data['challengesFrom'].empty?
         end
 
         @prev_message = message

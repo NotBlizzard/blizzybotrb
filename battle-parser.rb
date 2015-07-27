@@ -29,12 +29,10 @@ class BattleParser
     @ws.send("#{room}|/part")
   end
 
-
   def faint(room, team, moves, bot, opponent)
     pkmn = @messages[2].split(': ')[1].downcase
-    if @player_one
+    if @player_one or @player_one.nil?
       if @data.include? "p1a: "
-        #team.delete_if {|x| x[:nick] == pkmn}
         team.find{|x| x[:nick] == pkmn}[:fainted] = true
         @bot[:hp] = 0
         move = decide(moves, @bot, opponent, @tier, team)
@@ -43,7 +41,6 @@ class BattleParser
       end
     else
       if @data.include? "p2a: "
-        #team.delete_if {|x| x[:nick] == pkmn}
         team.find{|x| x[:nick] == pkmn}[:fainted] = true
         @bot[:hp] = 0
         move  = decide(moves, @bot, opponent, @tier, team)
@@ -165,7 +162,6 @@ class BattleParser
         :fainted => false
       }
     end
-    puts "team in method is now #{team}"
     team
   end
 

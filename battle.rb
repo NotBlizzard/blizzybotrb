@@ -9,14 +9,15 @@ class Battle
   attr_accessor :team, :moves, :bot, :opponent, :tier, :room, :player_one
   include BattleHelpers
 
-  def initialize(tier, player_one)
+  def initialize(tier, bot_name)
+    @bot_name = bot_name
     @tier = tier
+    @player_one = true
     @team = []
     @moves = []
     @bot = {}
     @pick = ''
     @opponent = {}
-    @player_one = player_one
     @have_team = false
   end
 
@@ -29,6 +30,7 @@ class Battle
         @team = handler.get_team(message[2])
         @have_team = true
       end
+      @pick = rand(1...7)
       @pick = 1 if @tier == 'randombattle'
       handler.request(message[2], room, @pick, @moves, @team)
 
@@ -39,7 +41,7 @@ class Battle
       end
 
     when 'inactive'
-      if data.include? "blizzybot" # make this better
+      if data.include? "blizzybot" # TODO: make this better
         move = decide(@moves, @bot, @opponent, @tier, @team)
         ws.send("#{room}|#{move}")
       end
@@ -48,11 +50,11 @@ class Battle
       handler.faint(room, @team, @moves, @bot, @opponent)
 
     when 'player'
-      if message[2] == 'p1'
-        if message[3] =~ /\W#{@user}/
-          @player_one = true
-        else
+      if message[2] == 'p2' # For some reason 'p1' is skipped
+        if message[3].downcase == @bot_name.downcase
           @player_one = false
+        else
+          @player_one = true
         end
       end
       handler.player(@moves,@team)
@@ -62,14 +64,15 @@ class Battle
 
     when 'teampreview'
       ws.send("#{room}|/team #{@pick}")
+      puts "I pick #{@pick}"
 
     when 'turn'
-      ws.send("#{room}|good luck have fun. I am a bot.") if message[2].to_i == 1
+      ws.send("#{room}|good luck have fun.") if message[2].to_i == 1
       move = decide(@moves, @bot, @opponent, @tier, @team)
       ws.send("#{room}|#{move}")
 
     when 'drag'
-      if @player_one
+      if @player_one or @player_one.nil?
         if data.include? "p1a"
           @bot = handler.get_bot_switch_values(@team)
         else

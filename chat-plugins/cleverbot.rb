@@ -6,17 +6,16 @@ require 'cleverbot-api'
 class Cleverbot
   extend Plugin
 
-
-    match_string "blizzybot"
+  match_string "blizzybot"
 
   def initialize
-      $bot = CleverBot.new
+    @clever_bot = CleverBot.new
   end
 
   def do(message)
     messages = message.split('|')
     msg = messages[4]
-    $bot.think msg
+    @clever_bot.think msg
   end
 end
 
