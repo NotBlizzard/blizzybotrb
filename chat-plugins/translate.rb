@@ -2,10 +2,11 @@ require_relative '../plugins.rb'
 require 'byebug'
 require 'faraday'
 
+
+
 class Translate
   extend Plugin
-
-  match_string "blizzybot, translate (.+) from (.+) to (.+)"
+  match_string "#{YAML.load_file('options.yaml')['user']}, translate (.+) from (.+) to (.+)"
 
   def do(message)
     messages = message.split('|')

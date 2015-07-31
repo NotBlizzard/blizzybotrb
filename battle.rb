@@ -6,6 +6,7 @@ require './battle-parser.rb'
 
 
 class Battle
+
   attr_accessor :team, :moves, :bot, :opponent, :tier, :room, :player_one
   include BattleHelpers
 
@@ -19,6 +20,7 @@ class Battle
     @pick = ''
     @opponent = {}
     @have_team = false
+    @forced_switch_moves = ['uturn', 'batonpass', 'voltswitch']
   end
 
   def run(ws, data, room)
@@ -42,8 +44,13 @@ class Battle
 
     when 'inactive'
       if data.include? "blizzybot" # TODO: make this better
-        move = decide(@moves, @bot, @opponent, @tier, @team)
+        move = decide(@moves, @bot, @opponent, @tier, @team, true)
         ws.send("#{room}|#{move}")
+        if @forced_switch_moves.include? move.split(' ')[1].downcase # hackish hack
+          @bot[:forced_switch] = true
+          move = decide(@moves, @bot, @opponent, @tier, @team, true)
+          ws.send("#{room}|#{move}")
+        end
       end
 
     when 'faint'
@@ -70,11 +77,18 @@ class Battle
       ws.send("#{room}|good luck have fun.") if message[2].to_i == 1
       move = decide(@moves, @bot, @opponent, @tier, @team)
       ws.send("#{room}|#{move}")
+      if @forced_switch_moves.include? move.split(' ')[1].downcase # hackish hack
+        @bot[:forced_switch] = true
+        move = decide(@moves, @bot, @opponent, @tier, @team)
+        ws.send("#{room}|#{move}")
+      end
 
     when 'drag'
       if @player_one or @player_one.nil?
         if data.include? "p1a"
           @bot = handler.get_bot_switch_values(@team)
+          index = @team.index(@team.find{|x| x[:name] == message[3].downcase.split(',')[0]})
+          @team[0], @team[index] = @team[index], @team[0]
         else
           @opponent = handler.get_opponent_switch_values
         end
@@ -82,6 +96,8 @@ class Battle
         if data.include? "p1a"
           @opponent = handler.get_opponent_switch_values
         else
+          index = @team.index(@team.find{|x| x[:name] == message[3].downcase.split(',')[0]})
+          @team[0], @team[index] = @team[index], @team[0]
           @bot = handler.get_bot_switch_values(@team)
         end
       end

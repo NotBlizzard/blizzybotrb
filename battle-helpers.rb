@@ -45,8 +45,7 @@ module BattleHelpers
     end
   end
 
-  def decide(moves, you, opponent, tier, team)
-    byebug
+  def decide(moves, you, opponent, tier, team, skip_switch = false)
     opponent[:type].map{|x| x.downcase! }
     moves_power = []
     strongest = ''
@@ -89,28 +88,27 @@ module BattleHelpers
       end
 
       moves_power << {:power => move[:power] * mod, :name => move[:name], :mod => mod}
-      # Allow Sigilyph to set up.
     end
-    puts "moves power is #{moves_power}"
     strongest = moves_power.max_by {|x| x[:power]}
     strongest = {:power => 0,:mod => 0,:name => ''}  if strongest.nil? or strongest.empty?
     switching = false
     # Check if the mod is less than 1, if opp has type adv, or pokemon fainted.
-    puts "opponent type is #{opponent[:type]} and I am weak to #{effectiveness(you[:type])[:weak]}"
-    if ((strongest[:mod].to_i < 1) and (tier != 'challengecup1v1')) or (opponent[:type] & effectiveness(you[:type], you[:ability])[:weak].map(&:to_s)).any? or you[:hp] == 0
-      unless tier == 'challengecup1v1'
-        switching = true
-        puts 'in loop'
-        team.each do |member|
-          opponent[:type] = opponent[:type].map(&:downcase)
-          if (effectiveness(opponent[:type])[:weak].map(&:to_s) & member[:type].map(&:to_s)).any? and member[:fainted] == false
-            unless member[:name] == you[:name]
-              if member[:forced_to_switch].nil?
-                switching = false
-                i = team.index(member)
-                puts "im switching into #{member} which is /switch #{i+1}"
-                team[0], team[i] = team[i], team[0]
-                return "/switch #{i+1}"
+    unless skip_switch == true
+      if ((strongest[:mod].to_i < 1) and (tier != 'challengecup1v1')) or (opponent[:type] & effectiveness(you[:type], you[:ability])[:weak].map(&:to_s)).any? or you[:hp] == 0 or (you[:forced_switch] == true)
+        unless tier == 'challengecup1v1'
+          switching = true
+          puts 'in loop'
+          team.each do |member|
+            opponent[:type] = opponent[:type].map(&:downcase)
+            if (effectiveness(opponent[:type])[:weak].map(&:to_s) & member[:type].map(&:to_s)).any? and member[:fainted] == false
+              unless member[:name] == you[:name]
+                if member[:forced_to_switch].nil?
+                  switching = false
+                  i = team.index(member)
+                  puts "im switching into #{member} which is /switch #{i+1}"
+                  team[0], team[i] = team[i], team[0]
+                  return "/switch #{i+1}"
+                end
               end
             end
           end
@@ -154,6 +152,8 @@ module BattleHelpers
       return "/move #{@@choiced_move[you[:name]]}"
     end
 
+    # Now we check to see if the opp has flash fire. it's a guess.
+    # TODO: ^
     "/move #{strongest[:name].downcase} #{mega_or_not}"
   end
 end

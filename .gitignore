@@ -1,4 +1,5 @@
-lang.json *.gem
+lang.json
+*.gem
 *.rbc
 /.config
 /coverage/
