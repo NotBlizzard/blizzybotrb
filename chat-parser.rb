@@ -89,7 +89,7 @@ class Bot
           @room = 'lobby' unless @prev_message.include? ">"
           user = messages[3].downcase
           time = messages[2].to_i
-          if messages[4][0] == @symbol and Time.now.to_i > @room_join_time[@room].to_i and Time.now.to_i <= time
+          if messages[4][0] == @symbol and Time.now.to_i < time
             if @room == 'lobby'
               send_command(messages, '', user, @symbol, @ws)
             else

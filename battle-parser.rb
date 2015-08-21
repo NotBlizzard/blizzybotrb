@@ -95,7 +95,6 @@ class BattleParser
     opponent = {}
     opponent[:name] = @data.split("#{p2_split}a: ")[1].split('|')[0].downcase.gsub(/[^A-z0-9]/, '').gsub(/mega/,'')
     opponent[:type] = POKEDEX[opponent[:name]]['types'].map(&:downcase)
-    opponent[:speed] = POKEDEX[opponent[:name]]['baseStats']['spe']
     return opponent
   end
 
@@ -107,7 +106,6 @@ class BattleParser
     you[:ability] = team.find{|x| x[:name] == you[:name]}[:ability]
     you[:moves] = team.find{|x| x[:name] == you[:name]}[:moves]
     you[:item] = team.find{|x| x[:name] == you[:name]}[:item]
-    you[:speed] = POKEDEX[you[:name]]['baseStats']['spe']
     return you
   end
 

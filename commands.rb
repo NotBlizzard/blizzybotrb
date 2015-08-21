@@ -78,13 +78,14 @@ module Commands
 
   def ladder(args, room, user)
     return '' unless user.can('ladder')
-    if ($ladder)
+    tier = args
+    if (tier == 'off')
       $ladder = false
       self.say(room, "Laddering is now off.")
     else
       $ladder = true
-      if TIERS.include? args
-        $ladder_tier = args
+      if TIERS.include? tier
+        $ladder_tier = tier
         @ws.send("#{room}|/search #{args}")
         self.say(room, "I am now laddering.")
       else
