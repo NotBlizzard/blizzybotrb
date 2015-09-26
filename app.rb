@@ -22,7 +22,7 @@ EventMachine.run do
     options['rooms'],
     options['server'],
     options['owner'],
-    options['symbol'],
+    options['symbol']
     true,
     [Seen]
   )

@@ -16,7 +16,8 @@ GEM
       tzinfo (~> 1.1)
     byebug (4.0.5)
       columnize (= 0.9.0)
-    colorize (0.7.7)
+    cleverbot (0.2.0)
+      httparty (>= 0.8.1, < 1.0)
     columnize (0.9.0)
     domain_name (0.5.24)
       unf (>= 0.0.5, < 1.0.0)
@@ -68,8 +69,8 @@ PLATFORMS
 
 DEPENDENCIES
   byebug
+  cleverbot
   cleverbot-api!
-  colorize
   eventmachine
   faraday
   faye-websocket

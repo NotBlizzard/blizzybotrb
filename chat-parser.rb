@@ -16,7 +16,6 @@ $ladder_tier = 'challengecup1v1'
 class Bot
   include ChatHelpers
   attr_accessor :ws,:room, :user, :rooms, :server, :owner, :symbol, :log, :plugins, :room_join_time
-  @cleverbot = CleverBot.new
   # Yes, I know this is a global variable. I use it for accessing battle information while it is running.
   $battles = {}
 
@@ -36,7 +35,6 @@ class Bot
     @room = ""
     @tier = ''
     @joined = false
-    @time = ''
     @log = log
   end
 
@@ -54,16 +52,17 @@ class Bot
           @room = message.split('>')[1].strip
         end
 
-        @time = Time.now.to_i
-
         puts message if @log
 
-        unless @room_join_time[@room].nil?
-          if Time.now.to_i > @room_join_time[@room].to_i
-            @plugins.each do |plugin|
-              if message =~ plugin.match
-                @ws.send("#{@room}|#{plugin.new.do(message)}")
-              end
+        begin
+          time = message[2].to_i
+        rescue
+        end
+
+        if Time.now.to_i > time
+          @plugins.each do |plugin|
+            if message =~ plugin.match
+              @ws.send("#{@room}|#{plugin.new.do(message)}")
             end
           end
         end

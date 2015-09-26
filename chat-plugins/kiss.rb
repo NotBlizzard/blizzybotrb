@@ -10,7 +10,7 @@ class Kiss
   def do(message)
    messages = message.split('|')
    user ||= messages[3]
-   unless user =~ /\Wblizzybot/
+   unless user =~ /\Wblizzybot/i
     "o3o"
    end
  end
