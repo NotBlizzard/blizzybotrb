@@ -1,4 +1,3 @@
-require 'rest_client'
 require 'open-uri'
 require 'rubygems'
 require 'hyoka'

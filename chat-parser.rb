@@ -4,7 +4,6 @@ require './battle'
 require './chat-helpers.rb'
 
 require 'faye/websocket'
-require 'rest-client'
 require 'open-uri'
 require 'faraday'
 require 'json'
