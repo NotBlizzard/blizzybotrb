@@ -1,6 +1,4 @@
 require_relative '../plugins.rb'
-require 'byebug'
-
 
 class Kiss
   extend Plugin

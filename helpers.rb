@@ -1,6 +1,5 @@
 require 'json'
 require 'yaml'
-require 'byebug'
 
 $ranks = JSON.parse(File.read('ranks.json'))
 $owner = YAML.load_file('options.yaml')['owner']
@@ -40,7 +39,6 @@ class String
     r = self[0]
     r = 'u' if r == ' '
     cmd_rank = $ranks[cmd]
-    #cmd_rank = 'u' if $ranks[cmd].nil?
     return groups[r] >= groups[cmd_rank]
   end
 end

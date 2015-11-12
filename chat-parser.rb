@@ -1,12 +1,13 @@
-# Ye be warned: here be dragons.
-require './commands'
-require './battle'
-require './chat-helpers.rb'
 
 require 'faye/websocket'
 require 'open-uri'
 require 'faraday'
 require 'json'
+
+require './commands'
+require './battle'
+require './chat-helpers'
+
 
 $start_time = ''
 $ladder = false
@@ -20,7 +21,7 @@ class Bot
 
   def initialize(user, pass = '', rooms, server, owner, symbol, log, plugins)
     @room = ""
-    @room_join_time = {}
+    @room_joined = {}
     @ws = ''
     @prev_message = ''
     @challenged = false
@@ -58,9 +59,9 @@ class Bot
         rescue
         end
 
-        if Time.now.to_i > time
+        if @room_joined[room] == true
           @plugins.each do |plugin|
-            if message =~ plugin.match
+            unless (message.match(plugin.match)).nil?
               @ws.send("#{@room}|#{plugin.new.do(message)}")
             end
           end
@@ -87,7 +88,8 @@ class Bot
           @room = 'lobby' unless @prev_message.include? ">"
           user = messages[3].downcase
           time = messages[2].to_i
-          if messages[4][0] == @symbol and Time.now.to_i < time
+          puts "time of msg was #{time} and time now is #{Time.now.to_i}"
+          if messages[4][0] == @symbol and @room_joined[@room] == true
             if @room == 'lobby'
               send_command(messages, '', user, @symbol, @ws)
             else
@@ -98,11 +100,12 @@ class Bot
         when 'updateuser'
           @rooms.each do |r|
             @ws.send("|/join #{r}")
-            @room_join_time[r] = Time.now
           end
 
-        #when 'tournament'
-        #  tournament_helper(@room, messages[3], @ws)
+        when 'J'
+          unless (messages[2].match(@user)).nil?
+            @room_joined[@prev_message.split('>')[1]] = true
+          end
 
         when 'player'
           battleroom = @room[/\d+/]

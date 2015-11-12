@@ -1,6 +1,6 @@
 require_relative '../plugins.rb'
-require 'byebug'
 require 'faraday'
+require 'yaml'
 
 
 

@@ -1,9 +1,7 @@
 require 'open-uri'
 require 'rubygems'
 require 'hyoka'
-require 'time-lord'
-require 'time_diff'
-require 'byebug'
+require 'nokogiri'
 require 'cgi'
 
 require './chat-parser.rb'
@@ -31,6 +29,14 @@ module Commands
     self.say(room, "Uptime is currently #{(Time.now.to_i - $start_time).ago.to_words.to_s.split(' ago')[0]}")
   end
 
+  def mal(args, room, user)
+  	anime = args
+  	page = Nokogiri::HTML(open("https://www.google.com/search?q=#{CGI.escape(anime + 'myanimelist')}")).at('h3.r')
+  	data_string = page.at('./following::div').children.first.text
+  	data_string.gsub!(/(CachedSimilar|Cached)/, '')
+  	data_string
+  end
+
   def slap(args, room, user)
     return '' unless user.can('slap')
     self.say(room, "/me slaps #{args} with a fish.")
@@ -38,13 +44,6 @@ module Commands
 
   def magic(args, room, user)
     self.say(room, "(づ｡◕‿‿◕｡)づ・。*。✧・゜゜・。✧。*・゜゜・✧。・­­­­­゜゜・。*。・゜*✧‌‌‌‌‌")
-  end
-
-  def lang(args, room, user)
-    data = JSON.parse(File.read('lang.json'))
-    data[room] = args
-    File.open('lang.json', 'w') {|a| a.write(data.to_json)}
-    self.say(room, "Language for room '#{room}' is now set to '#{args}'")
   end
 
   def baka(args, room, user)
@@ -116,7 +115,8 @@ module Commands
     return '' unless user.can('trivia')
     url = "http://mentalfloss.com/api/1.0/views/amazing_facts.json?limit=1"
     data = JSON.parse(RestClient.get url)
-    self.say(room, data[0]['nid'].gsub(/<?(\/)p>/,'').gsub('<p>',''))
+    puts data
+    self.say(room, data[0]['nid'].gsub(/(<p>|<\/p>)/,''))
   end
 
   def exit(_,_, user)
@@ -130,20 +130,19 @@ module Commands
       return "1 6-sided Die: #{Random.rand(1..6)}"
     else
       if args.include? 'd'
-        args  =  args.to_s.split('d')
-        dice  =  args[0].to_i
-        range  =  args[1].to_i
+        args = args.to_s.split('d')
+        dice = args[0].to_i
+        range = args[1].to_i
         if dice > 20
-          self.say(room, 'Too many dice.')
+          self.say(room, 'Too many ~~cooks~~ dice.')
         elsif range > 99
-          self.say(room, "Range can't be over 99.")
+          self.say(room, "I got 99 dice but #{range} ain't one.")
         end
         rolls  =  []
         dice.times do
           rolls << Random.rand(1..range.to_i)
         end
-        self.say(room, "#{dice} #{range}-sided Dice: #{rolls.join(', ')}.
-                Total : #{rolls.inject(:+)}")
+        self.say(room, "#{dice} #{range}-sided Dice: #{rolls.join(', ')}. Total : #{rolls.inject(:+)}")
       else
         self.say(room, "1 #{args}-sided Die: #{Random.rand(1..args.to_i)}")
       end
@@ -157,10 +156,6 @@ module Commands
     rescue
       self.say(room, "Error.")
     end
-  end
-
-  def a(a, r, u)
-    self.say(room, "#{eval(a)}")
   end
 
    def py(args, room, user)

@@ -1,12 +1,14 @@
+# battle.rb - Where the battles happen.
+
 require 'json'
-require 'byebug'
+
 require './helpers.rb'
 require './battle-helpers.rb'
 require './battle-parser.rb'
 
 
 class Battle
-
+  #TODO: keep track of move PP
   attr_accessor :team, :moves, :bot, :opponent, :tier, :room, :player_one
   include BattleHelpers
 

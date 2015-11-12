@@ -1,7 +1,7 @@
-require 'byebug'
 require 'faraday'
 
 module BattleHelpers
+
   @@megaed = false
   @@choiced_move = {}
 
