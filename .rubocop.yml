@@ -1,0 +1,9 @@
+Metrics/ClassLength:
+  Max: 120
+  CountComments: false
+
+Metrics/MethodLength:
+  Max: 20
+
+Metrics/ParameterLists:
+  Max: 20
