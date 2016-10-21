@@ -1,280 +1,134 @@
-require 'open-uri'
-require 'rubygems'
-require 'hyoka'
-require 'nokogiri'
-require 'cgi'
-
-require './chat-parser.rb'
-require './helpers.rb'
-
-unless File.exist?('ranks.json')
-  File.open('ranks.json', 'w') { |f| f.write('{}') }
-end
-
 module Commands
-  HYOKA = Hyoka.new
-  ROOT = File.dirname(File.absolute_path(__FILE__))
-  RANKS = {
-    ' ' => 0,
-    '+' => 1,
-    '%' => 2,
-    '@' => 3,
-    '&' => 4,
-    '~' => 5
-  }
+  def can(user, command, bot)
+    user_rank = user[0]
+    if user_rank.match(/[A-z0-9]/).nil?
+      user = user[1..-1].gsub(/[^A-z0-9]/, "")
 
-  def uptime(args, room, user)
-    return '' unless user.can('uptime')
-    # Hackish way is hackish.
-    self.say(room, "Uptime is currently #{(Time.now.to_i - $start_time).ago.to_words.to_s.split(' ago')[0]}")
-  end
+      return true if bot.admins.include? user
 
-  def mal(args, room, user)
-  	anime = args
-  	page = Nokogiri::HTML(open("https://www.google.com/search?q=#{CGI.escape(anime + 'myanimelist')}")).at('h3.r')
-  	data_string = page.at('./following::div').children.first.text
-  	data_string.gsub!(/(CachedSimilar|Cached)/, '')
-  	data_string
-  end
+      rank_data = JSON.parse(File.read("./data/ranks.json"))
 
-  def slap(args, room, user)
-    return '' unless user.can('slap')
-    self.say(room, "/me slaps #{args} with a fish.")
-  end
+      return true if rank_data[command].nil?
 
-  def magic(args, room, user)
-    self.say(room, "(づ｡◕‿‿◕｡)づ・。*。✧・゜゜・。✧。*・゜゜・✧。・­­­­­゜゜・。*。・゜*✧‌‌‌‌‌")
-  end
+      ranks = {
+        " " => 0,
+        "+" => 1,
+        "%" => 2,
+        "@" => 3,
+        "&" => 4,
+        "~" => 5
+      }
 
-  def baka(args, room, user)
-    self.say(room, "#{args}, it's not l-like I-I l-like you or a-anything, baka!!")
-  end
-
-  def seen(args, room, user)
-    return '' unless user.can('seen')
-    args = args.downcase.gsub(/[^a-z0-9]/,'')
-    if user[1..-1].gsub(/[^a-z0-9]/,'') == args
-      return self.say(room, "Look in the mirror.")
-    end
-    if $seen_data.keys.include? args
-      self.say(room, "#{args} was last seen about #{(Time.now.to_i - $seen_data[args].seconds).ago.to_words}")
-    else
-      self.say(room, "#{args} has never been seen before.")
-    end
-  end
-
-  def unscramble(args, room, user)
-    pokemon = File.read(ROOT + '/data/pokemon.txt').lines.map{|x| x.delete!("\n") }
-    correct_pokemon = ''
-    pokemon.each do |pokemon|
-      if pokemon.chars.sort.join == args.chars.sort.join
-        correct_pokemon = pokemon
-      end
-    end
-    "#{correct_pokemon}"
-  end
-
-  def ladder(args, room, user)
-    return '' unless user.can('ladder')
-    tier = args
-    if (tier == 'off')
-      $ladder = false
-      self.say(room, "Laddering is now off.")
-    else
-      $ladder = true
-      if TIERS.include? tier
-        $ladder_tier = tier
-        @ws.send("#{room}|/search #{args}")
-        self.say(room, "I am now laddering.")
+      if ranks[user_rank] >= rank_data[command]
+        true
       else
-        self.say(room, "not a valid tier.")
+        false
       end
-    end
-  end
-
-  def talk(args, room, user)
-    return '' unless user.can('sudo')
-    unless ($talk)
-      $talk = true
-      self.say(room, "Talking is now on")
     else
-      $talk = false
-      self.say(room, "Talking is now off")
+      false
     end
   end
 
-  def flip(arg, room, _)
-    if arg.nil? or arg.length == 0
-      self.say(room,"(╯°□°）╯︵ ┻━┻")
-    else
-      self.say(room,"(╯°□°）╯︵ #{arg.flip}")
-    end
-  end
-
-  def trivia(_,room, user)
-    return '' unless user.can('trivia')
-    url = "http://mentalfloss.com/api/1.0/views/amazing_facts.json?limit=1"
-    data = JSON.parse(RestClient.get url)
-    puts data
-    self.say(room, data[0]['nid'].gsub(/(<p>|<\/p>)/,''))
-  end
-
-  def exit(_,_, user)
-    return '' unless user.can('exit')
-    ShowdownBot.exit
-  end
-
-  def dice(args=nil, room, user)
-    return '' unless user.can('dice')
-    if args.nil?
-      return "1 6-sided Die: #{Random.rand(1..6)}"
-    else
-      if args.include? 'd'
-        args = args.to_s.split('d')
-        dice = args[0].to_i
-        range = args[1].to_i
-        if dice > 20
-          self.say(room, 'Too many ~~cooks~~ dice.')
-        elsif range > 99
-          self.say(room, "I got 99 dice but #{range} ain't one.")
-        end
-        rolls  =  []
-        dice.times do
-          rolls << Random.rand(1..range.to_i)
-        end
-        self.say(room, "#{dice} #{range}-sided Dice: #{rolls.join(', ')}. Total : #{rolls.inject(:+)}")
-      else
-        self.say(room, "1 #{args}-sided Die: #{Random.rand(1..args.to_i)}")
-      end
-    end
-  end
-
-  def >(args, room, user)
-    return '' unless user.can('eval')
-    begin
-      self.say(room, "#{eval(args)}")
-    rescue
-      self.say(room, "Error.")
-    end
-  end
-
-   def py(args, room, user)
-    self.say(room, "> #{HYOKA.eval('print('+args+')', 'python/cpython-3.4.1')}")
-  end
-
-  def rb(args, room, user)
-    self.say(room, "> #{HYOKA.eval('puts '+args, 'ruby/mri-2.2')}")
-  end
-
-  def js(args, room, user)
-    self.say(room, "> #{HYOKA.eval('console.log('+args+')', 'javascript/node-0.10.29')}")
-  end
-
-  def php(args, room, user)
-    self.say(room, "> #{HYOKA.eval('<?php echo'+args+' ?>', 'php/php-5.5.14')}")
-  end
-
-  def rank(args, room, user)
-    return '' unless user.can('rank')
-    command_rank  =  RANKS[args] || 'unranked'
-    self.say(room, "The rank for #{args} is: #{command_rank}")
-  end
-
-  def salt(args, room, user)
-    return '' unless user.can('salt')
-    self.say(room, "#{args} is #{(Random.rand(0.0..100.0)).round(2)}% salty.")
-  end
-
-  def hotpatch(args, room, user)
-    return '' unless user.can('reload')
-    begin
-      case args
-      when 'plugins'
-        Dir[ROOT + '/chat-plugins/*.rb'].each {|file| load file }
-        self.say(room, "#{args} reloaded.")
-      when 'commands'
-        load './commands.rb'
-        self.say(room, "#{args} reloaded.")
-      when 'helpers'
-        load './helpers.rb'
-        self.say(room, "#{args} reloaded.")
-      when 'battles'
-        load './battle.rb'
-        load './battle-helpers.rb'
-        load './battle-parser.rb'
-        self.say(room, "#{args} reloaded.")
-      when 'chat'
-        load './chat-parser.rb'
-        load './chat-helpers.rb'
-        self.say(room, "#{args} reloaded.")
-      else
-        self.say(room, "#{args} is not recognized as a hotpatch.")
-      end
-    rescue
-      self.say(room, 'Error.')
-    end
-  end
-
-  def fight(args, user)
-    return '' unless user.can('fight')
-    args  =  args.split(',')
-    if args.length > 2
-      nums = []
-      (args.length.to_i - 1).times.reduce([]) do |a|
-        max  =  100 - a.inject(:+).to_i
-        nums << Random.rand(0..max)
-      end
-      nums << 100 - nums.inject(:+)
-      message = "If #{args.englishize} were to fight, #{args.sample} would have the best chance of winning with #{nums.max}%."
-    else
-      message = "If #{args[0]} and #{args[1]} were to fight, #{args.sample} would have a #{Random.rand(0..100)}% chance of winning."
-    end
-    message
+  def js(args, room, user, bot)
+    can(user, __callee__, bot)
+    puts args
+    `node -p "#{args}"`
   end
 
 
-  def set(args, room, user)
-    return '' unless user.can('set')
-    args = args.gsub(/ /, '').split(',')
+  def vaporwave(args, room, user, bot)
+    args.split('').map { |i| "#{i} " }.join.chop
+  end
+
+  def echo(args, room, user, bot)
+    return false if !can(user, __callee__, bot)
+    args
+  end
+
+  def set(args, room, user, bot)
+    return false if !can(user, __callee__, bot)
+    commands = Commands.instance_methods.map(&:to_s).delete_if { |i| ["can", "set"].include? i }
+    rank_data = JSON.parse(File.read("./data/ranks.json"))
     command = args[0]
     rank = args[1]
-    if rank == 'u'
-      rank = ' '
+    unless rank.is_a? Integer
+      return "'#{rank}' is not a valid rank. rank must be a number between 0 and 5 (0 being normal user, 5 being administrator)."
     end
-    RANKS[command] = rank
-    File.open('ranks.json', 'w') { |b| b.write(RANKS.to_json) }
-    self.say(room, "The command #{command} is now set to #{rank}.")
+    ranks = {
+      " " => 0,
+      "+" => 1,
+      "%" => 2,
+      "@" => 3,
+      "&" => 4,
+      "~" => 5
+    }
+    unless commands.include? command
+      return "'#{command}' is not a valid command."
+    end
+    rank_data[command] = rank
+    File.open("./data/ranks.json", "w") do |f|
+      f.write(rank_data.to_json)
+    end
+    "'#{command}' has been set to '#{rank}'."
   end
 
-  def about(_,room, _)
-    self.say(room, "**BlizzyBot** : made by BlizzardQ. Made with Ruby #{RUBY_VERSION}.")
+  def ptcg(args, room, user, bot)
+    args = args.gsub(', ', ',').split(',')
+    if args[1].nil?
+      return "You must specify the set."
+    end
+    if args[0][-2..-1].downcase == "ex"
+      args[0] = "#{args[0][0..-3]}-#{args[0][-2..-1]}"
+    end
+    begin
+      url = "https://api.pokemontcg.io/v1/cards?name=#{args[0].downcase.gsub(/ /, '+')}"
+      data = JSON.parse(RestClient.get(url))
+      pokemon = data["cards"].select { |i| i["set"].gsub(/ /, "").downcase == args[1].gsub(/ /, "").downcase }[0]
+      return "bulbapedia.bulbagarden.net/wiki/#{pokemon["name"].gsub(/ /, '_')}_(#{pokemon["set"].gsub(/ /, "_")}_#{pokemon["number"]})"
+    rescue
+      return "`#{args[0]}` is not a valid Pokemon the Trading Card Game card."
+    end
   end
 
-  def helix(_, room, user)
-    return '' unless user.can('set')
-    File.readlines('data/helix.txt').sample
+  def mtg(args, room, user, bot)
+    return false if !can(user, __callee__, bot)
+    begin
+      url = "https://api.deckbrew.com/mtg/cards/#{args.downcase.gsub(/ /, "-")}"
+      return "http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=#{JSON.parse(RestClient.get(url))["editions"][0]["multiverse_id"]}"
+    rescue
+      return "'#{args[0]}' is not a valid Magic the Gathering card."
+    end
   end
 
-  def pick(args,room, user)
-    return '' unless user.can('pick')
-    randompick = args.split(',').sample
-    self.class.say(room,"Hmm, I randomly picked #{randompick}.")
+  def e(args, room, user, bot)
+    return false if !can(user, __callee__, bot)
+    if room.include? "battle-"
+      battle = bot.current_battle
+      return eval("#{args}")
+    else
+      return eval("#{args}")
+    end
   end
 
-  def urban(args, room, user)
-    return '' unless user.can('urban')
-    args = args.split(' ').join('+') if args.include? ' '
-    url = "http://api.urbandictionary.com/v0/define?term=#{args}"
-    url = 'http://api.urbandictionary.com/v0/random' if args.nil?
-    urban = JSON.parse(RestClient.get url)
-    puts '.lol.'
-    "#{urban['list'][0]['word']}: #{urban['list'][0]['definition'].gsub(/[\[\]\n]/, '')}"
+  def about(args, room, user, bot)
+    "BlizzyBot: a Pokemon Showdown bot written in Ruby by BlizzardQ"
   end
 
-  def echo(args, room, user)
-    return '' unless user.can('echo')
+  def reload(args, room, user, bot)
+    return false if !can(user, __callee__, bot)
 
-    self.say(room, args)
+    case args
+    when "commands"
+      load "#{Dir.pwd}/commands.rb"
+    when "battles"
+      Dir['./battle/util/*.rb'].each { |file| load file }
+      load "#{Dir.pwd}/battle/battle.rb"
+    when "bot"
+      load "#{Dir.pwd}/bot.rb"
+    else
+      return "Not a valid module."
+    end
+    puts "args are #{args[0]}"
+    "'#{args}' have been reloaded."
   end
 end
-

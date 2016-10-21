@@ -3,9 +3,9 @@ require 'rubygems'
 require 'bundler/setup'
 
 ROOT = File.dirname(File.absolute_path(__FILE__))
-Dir[ROOT + '/chat-plugins/*.rb'].each {|file| require file }
+Dir[ROOT + '/plugins/*.rb'].each { |file| require file }
 
-require './chat-parser'
+require './bot'
 require 'eventmachine'
 require 'yaml'
 
@@ -17,15 +17,13 @@ rescue
   exit!
 end
 EventMachine.run do
-  bot = Bot.new(
+  Bot.new(
     options['user'],
     options['pass'],
     options['rooms'],
     options['server'],
-    options['owner'],
+    options['admins'],
     options['symbol'],
-    true,
-    []
-  )
-  bot.run
+    [Gfycat, What]
+  ).connect
 end

@@ -3,6 +3,6 @@ source 'https://rubygems.org'
 gem 'faye-websocket'
 gem 'eventmachine'
 gem 'nokogiri'
-gem 'hyoka'
-gem 'faraday'
 gem 'rest-client'
+gem "rspec", :group => [:development, :test]
+gem "byebug", :group => [:development, :test]
